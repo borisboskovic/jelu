@@ -1,6 +1,6 @@
 package io.github.bayang.jelu.utils
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import net.coobird.thumbnailator.Thumbnails
 import net.coobird.thumbnailator.name.Rename
 import java.io.File
@@ -11,7 +11,8 @@ fun resizeImage(originalFile: File) {
     var backup: File? = null
     try {
         backup = originalFile.copyTo(File("${originalFile.absolutePath}.bak"), true)
-        Thumbnails.of(originalFile)
+        Thumbnails
+            .of(originalFile)
             .allowOverwrite(true)
             .useOriginalFormat()
             .size(500, 500)
@@ -20,7 +21,7 @@ fun resizeImage(originalFile: File) {
         try {
             backup.delete()
         } catch (e: Exception) {
-            /* noop */
+            // noop
         }
     } catch (e: Exception) {
         logger.error(e) { "Failed to resize image ${originalFile.name}" }

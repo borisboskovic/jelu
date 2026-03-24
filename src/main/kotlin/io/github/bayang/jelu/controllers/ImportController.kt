@@ -5,10 +5,10 @@ import io.github.bayang.jelu.dto.ImportConfigurationDto
 import io.github.bayang.jelu.dto.JeluUser
 import io.github.bayang.jelu.service.exports.CsvExportService
 import io.github.bayang.jelu.service.imports.CsvImportService
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.validation.Valid
-import mu.KotlinLogging
 import org.apache.commons.io.FilenameUtils
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -31,7 +31,6 @@ class ImportController(
     val csvExportService: CsvExportService,
     private val properties: JeluProperties,
 ) {
-
     @ApiResponse(responseCode = "201", description = "Imported the csv file")
     @Operation(description = "Trigger a csv import")
     @PostMapping(path = ["/imports"], consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])

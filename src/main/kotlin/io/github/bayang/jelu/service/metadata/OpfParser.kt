@@ -3,7 +3,7 @@ package io.github.bayang.jelu.service.metadata
 import com.ctc.wstx.stax.WstxInputFactory
 import io.github.bayang.jelu.dto.MetadataDto
 import io.github.bayang.jelu.utils.sanitizeHtml
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.commons.validator.routines.ISBNValidator
 import org.codehaus.staxmate.SMInputFactory
 import org.codehaus.staxmate.`in`.SMHierarchicCursor
@@ -16,7 +16,6 @@ private val logger = KotlinLogging.logger {}
 
 @Service
 class OpfParser {
-
     val factory: SMInputFactory = SMInputFactory(WstxInputFactory())
     private val validator: ISBNValidator = ISBNValidator.getInstance(false)
 
@@ -48,7 +47,10 @@ class OpfParser {
         return dto
     }
 
-    private fun enrichMetadata(dto: MetadataDto, tempData: MutableMap<String, String>) {
+    private fun enrichMetadata(
+        dto: MetadataDto,
+        tempData: MutableMap<String, String>,
+    ) {
         if (dto.isbn10.isNullOrBlank() && tempData.containsKey("isbn10")) {
             dto.isbn10 = tempData["isbn10"]
         }
@@ -63,7 +65,11 @@ class OpfParser {
         }
     }
 
-    private fun metadata(childElementCursor: SMInputCursor, dto: MetadataDto, tempData: MutableMap<String, String>) {
+    private fun metadata(
+        childElementCursor: SMInputCursor,
+        dto: MetadataDto,
+        tempData: MutableMap<String, String>,
+    ) {
         while (childElementCursor.next != null) {
             when (childElementCursor.localName) {
                 IDENTIFIER -> {
@@ -72,7 +78,11 @@ class OpfParser {
                         "GOOGLE" -> dto.googleId = childElementCursor.elemStringValue
                         "AMAZON" -> dto.amazonId = childElementCursor.elemStringValue
                         "ISBN" -> {
-                            val isbn = childElementCursor.elemStringValue.lowercase().removePrefix("urn:").removePrefix("isbn:")
+                            val isbn =
+                                childElementCursor.elemStringValue
+                                    .lowercase()
+                                    .removePrefix("urn:")
+                                    .removePrefix("isbn:")
                             if (validator.isValidISBN13(isbn)) {
                                 dto.isbn13 = isbn
                             } else if (validator.isValidISBN10(isbn)) {
@@ -154,17 +164,20 @@ class OpfParser {
         }
     }
 
-    private fun splitValues(elemStringValue: String?): Collection<String> {
-        return if (elemStringValue.isNullOrBlank()) {
+    private fun splitValues(elemStringValue: String?): Collection<String> =
+        if (elemStringValue.isNullOrBlank()) {
             emptySet()
         } else {
             if (elemStringValue.contains(";")) {
-                elemStringValue.split(";").filter { it.isNotBlank() }.map { it.trim() }.toSet()
+                elemStringValue
+                    .split(";")
+                    .filter { it.isNotBlank() }
+                    .map { it.trim() }
+                    .toSet()
             } else {
                 setOf(elemStringValue.trim())
             }
         }
-    }
 
     private fun logPart(childElementCursor: SMInputCursor) {
         while (childElementCursor.next != null) {

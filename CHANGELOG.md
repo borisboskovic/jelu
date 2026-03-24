@@ -1,3 +1,79 @@
+## [0.80.0](https://github.com/bayang/jelu/compare/v0.79.0...v0.80.0) (2026-03-04)
+
+
+### Features
+
+* also update the image when fetching metadata from detail page [#286](https://github.com/bayang/jelu/issues/286) ([1ede7a2](https://github.com/bayang/jelu/commit/1ede7a29a9457fad88b9163e68ba65a39e8241d7))
+
+## [0.79.0](https://github.com/bayang/jelu/compare/v0.78.1...v0.79.0) (2026-03-04)
+
+
+### Features
+
+* add token authentication [#281](https://github.com/bayang/jelu/issues/281) ([#289](https://github.com/bayang/jelu/issues/289)) ([ebcef02](https://github.com/bayang/jelu/commit/ebcef02a712445a115f3df45d4a3bed676f126e7))
+
+### [0.78.1](https://github.com/bayang/jelu/compare/v0.78.0...v0.78.1) (2026-03-02)
+
+
+### Bug Fixes
+
+* stats breaking on dropped event [#290](https://github.com/bayang/jelu/issues/290) ([3e87ee7](https://github.com/bayang/jelu/commit/3e87ee7db4ad55bbb31828d5806fd6b19062577f))
+
+## [0.78.0](https://github.com/bayang/jelu/compare/v0.77.1...v0.78.0) (2026-02-14)
+
+
+### Features
+
+* add currency [#285](https://github.com/bayang/jelu/issues/285) ([74f65c9](https://github.com/bayang/jelu/commit/74f65c90bca77c7a74336e8c982ba1eeada0dfa4))
+
+
+### Bug Fixes
+
+* price display and rounding [#282](https://github.com/bayang/jelu/issues/282) [#277](https://github.com/bayang/jelu/issues/277) ([31ce05d](https://github.com/bayang/jelu/commit/31ce05d93a851afb78df062bdda1d0415e642994))
+
+### [0.77.1](https://github.com/bayang/jelu/compare/v0.77.0...v0.77.1) (2026-01-13)
+
+
+### Bug Fixes
+
+* improve inventaire extraction when only isbn 10 is provided ([b18b21e](https://github.com/bayang/jelu/commit/b18b21e7ce5948d2eca3447ee768fcd26c41b245))
+
+## [0.77.0](https://github.com/bayang/jelu/compare/v0.76.0...v0.77.0) (2025-12-29)
+
+
+### Features
+
+* add price and original title fields [#269](https://github.com/bayang/jelu/issues/269) [#270](https://github.com/bayang/jelu/issues/270) ([f3bbdf9](https://github.com/bayang/jelu/commit/f3bbdf9118edbfba9906b5d7100c7d456fdef2e5))
+
+## [0.76.0](https://github.com/bayang/jelu/compare/v0.75.2...v0.76.0) (2025-12-22)
+
+
+### Features
+
+* authors list [#244](https://github.com/bayang/jelu/issues/244) ([f5a2610](https://github.com/bayang/jelu/commit/f5a26102651a28596717c4eb280868f804a0dd47))
+
+### [0.75.2](https://github.com/bayang/jelu/compare/v0.75.1...v0.75.2) (2025-12-21)
+
+### [0.75.1](https://github.com/bayang/jelu/compare/v0.75.0...v0.75.1) (2025-12-19)
+
+
+### Bug Fixes
+
+* resources not served by spring anymore ([f14793f](https://github.com/bayang/jelu/commit/f14793f6026b23d281f97948efe826c9be4b62df))
+
+## [0.75.0](https://github.com/bayang/jelu/compare/v0.74.0...v0.75.0) (2025-12-19)
+
+
+### Features
+
+* reading progress and finished state sync [#246](https://github.com/bayang/jelu/issues/246) ([974cfd9](https://github.com/bayang/jelu/commit/974cfd990242ba5923e04431c94867f5837ebeb1))
+
+
+### Bug Fixes
+
+* add missing translation [#267](https://github.com/bayang/jelu/issues/267) ([b4e11a2](https://github.com/bayang/jelu/commit/b4e11a2ef73bd8d34419b63c3e8f1f9b4dd9c6b3))
+* replace removed dependency ([abcf1d9](https://github.com/bayang/jelu/commit/abcf1d980d6953bb02f4195b922642567e5ee14b))
+
 ## [0.74.0](https://github.com/bayang/jelu/compare/v0.73.1...v0.74.0) (2025-10-13)
 
 

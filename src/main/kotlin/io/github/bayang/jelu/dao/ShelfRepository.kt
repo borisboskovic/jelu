@@ -3,7 +3,7 @@ package io.github.bayang.jelu.dao
 import io.github.bayang.jelu.dto.CreateShelfDto
 import io.github.bayang.jelu.dto.UserDto
 import io.github.bayang.jelu.utils.nowInstant
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jetbrains.exposed.sql.andWhere
 import org.jetbrains.exposed.sql.selectAll
 import org.springframework.stereotype.Repository
@@ -14,8 +14,10 @@ private val logger = KotlinLogging.logger {}
 
 @Repository
 class ShelfRepository {
-
-    fun save(createShelfDto: CreateShelfDto, user: UserDto): Shelf {
+    fun save(
+        createShelfDto: CreateShelfDto,
+        user: UserDto,
+    ): Shelf {
         val instant: Instant = nowInstant()
         return Shelf.new {
             this.creationDate = instant
@@ -36,17 +38,15 @@ class ShelfRepository {
             query.andWhere { ShelfTable.user eq user.id }
         }
         name?.let {
-            query.andWhere { ShelfTable.name like(formatLike(name)) }
+            query.andWhere { ShelfTable.name like (formatLike(name)) }
         }
         targetId?.let {
-            query.andWhere { ShelfTable.targetId eq(targetId) }
+            query.andWhere { ShelfTable.targetId eq (targetId) }
         }
         return Shelf.wrapRows(query).toList()
     }
 
-    fun findById(
-        id: UUID,
-    ): Shelf = Shelf[id]
+    fun findById(id: UUID): Shelf = Shelf[id]
 
     fun delete(shelfId: UUID) {
         Shelf[shelfId].delete()

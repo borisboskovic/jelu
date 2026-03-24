@@ -11,7 +11,7 @@
         "random": "náhodné",
         "add_book": "pridať knihu",
         "dashboard": "nástenka",
-        "login": "prihlásiť",
+        "login": "Prihlásiť sa",
         "logout": "Odhlásiť sa",
         "search": "hľadať",
         "history": "história",
@@ -53,14 +53,14 @@
         "choose_file": "Vybrať súbor",
         "import_book": "importovať knihu",
         "fetch_book": "získať knihu",
-        "import": "načítať",
+        "import": "Importovať",
         "discard": "zahodiť",
         "actual_cover": "aktuálny obal",
         "click_bin_to_remove": "Kliknutím na kôš odstránite aktuálny obal a nahráte nový",
         "refresh_to_restore": "Stlačte refresh pre obnovenie obalu",
         "book_not_yet_in_books": "Táto kniha ešte nie je vo vašich knihách, dvojklikom ju pridáte",
         "not_in_your_books": "nie je vo vašich knihách",
-        "books_from_name": "Knihy od {name}",
+        "books_from_name": "Knihy od autora {name}",
         "delete_for_all_or_only_you": "Vymazať knihu pre všetkých používateľov alebo len pre vás?",
         "only_me": "Iba pre mňa",
         "all_users": "Pre všetkých",
@@ -77,7 +77,7 @@
         "short_language_code": "Krátky kód jazyka",
         "back": "naspäť",
         "author_import_help1": "Vyberte jazyk vyhľadávania.",
-        "author_import_help2": "Ak je výsledok prázdny, skúste iný jazyk.",
+        "author_import_help2": "Ak je výsledok vyhľadávania prázdny, skúste iný jazyk.",
         "click_to_import": "Kliknite pre importovanie",
         "create": "vytvoriť",
         "submit": "odoslať",
@@ -97,6 +97,7 @@
         "yes": "Áno",
         "no": "Nie",
         "do_nothing": "Neurobiť nič",
+        "cancel": "Zrušiť",
         "add": "Pridať",
         "add_to_my_books": "Ešte nie je vo vašich knihách, kliknite pre pridanie",
         "add_translator": "Pridať prekladateľa",
@@ -125,7 +126,8 @@
         "find-series": "Nájsť sériu",
         "delete_this_author": "Vymazať tohto autora z {nb} knihy (kníh) a z databázy?",
         "orphan_authors": "Osamotení autori",
-        "find-authors": "Nájsť autorov"
+        "find-authors": "Nájsť autorov",
+        "list_empty": "Zoznam je prázdny"
     },
     "settings": {
         "pick_language": "Vyberte svoj jazyk",
@@ -150,7 +152,9 @@
         "shelves": "Poličky",
         "shelves_max_number_reached": "Maximálny počet poličiek je dosiahnutý. Ak chcete pridať ďalšie, odstráňte existujúce.",
         "shelf_choose_tag": "Výberom štítku vytvoríte príslušnú poličku",
-        "custom_lists": "Vlastné zoznamy"
+        "custom_lists": "Vlastné zoznamy",
+        "choose_currency": "Vyberte svoju menu",
+        "api_tokens": "API tokeny"
     },
     "user": {
         "log_first": "Najskôr sa prihláste, prosím"
@@ -172,7 +176,8 @@
         "modification_date": "Dátum úpravy",
         "page_count": "Počet strán",
         "user_avg_rating": "moje priemerné hodnotenie",
-        "avg_rating": "priemerné hodnotenie"
+        "avg_rating": "priemerné hodnotenie",
+        "name": "Meno"
     },
     "reading_events": {
         "finished": "prečítaná",
@@ -201,7 +206,9 @@
         "only_not_in_my_list": "Iba knihy, ktoré nie sú v mojich zoznamoch",
         "owned": "Kniha je vo vlastníctve",
         "role": "Rola",
-        "borrowed": "Kniha je požičaná"
+        "borrowed": "Kniha je požičaná",
+        "filter": "Filtrovať",
+        "type_to_filter": "Napísaním filtrujte autorov"
     },
     "book": {
         "owned": "vo vlastníctve",
@@ -236,7 +243,9 @@
         "translator": "prekladateľ | prekladatelia",
         "borrowed": "požičané",
         "current_page_number": "Aktuálne číslo strany",
-        "narrator": "Rozprávač | Rozprávači"
+        "narrator": "Rozprávač | Rozprávači",
+        "original_title": "Pôvodný názov",
+        "price": "Cena"
     },
     "authors_merge": {
         "authors_merging_utility": "Nástroj na zlúčenie autorov",
@@ -330,7 +339,8 @@
         "dropped": "nedočítané",
         "total": "Celkom",
         "read": "Prečítané",
-        "unread": "Neprečítané"
+        "unread": "Neprečítané",
+        "prices_sum": "Cena spolu"
     },
     "history": {
         "years": "roky"
@@ -397,7 +407,8 @@
             "EXIT_CODE_NOT_ZERO": "Zásuvný modul na získanie metadát sa abnormálne ukončil",
             "EXCEPTION_CAUGHT": "Pri volaní zásuvného modulu metadát bola vyvolaná výnimka"
         },
-        "details": "Podrobnosti o chybe"
+        "details": "Podrobnosti o chybe",
+        "positive_only": "Musí byť kladné číslo"
     },
     "lists": {
         "create_list": "Vytvoriť vlastný zoznam",
@@ -412,5 +423,45 @@
         "empty": "Zoznam je prázdny",
         "edit_list": "Upraviť zoznam",
         "update_list": "Aktualizovať zoznam"
+    },
+    "api_tokens": {
+        "title": "API tokeny",
+        "description": "Vytvorte API tokeny, aby ste umožnili programový prístup k Jelu API. Tokeny je možné použiť pre automatizačné skripty, integrácie tretích strán a CI/CD procesy.",
+        "create": "Vytvoriť token",
+        "create_new": "Vytvoriť nový API token",
+        "no_tokens": "Zatiaľ nie je k dispozícii žiadny API token. Vytvorte si ho, aby ste mohli začať.",
+        "token_name": "Názov tokenu",
+        "name_placeholder": "napr. Skript na zálohovanie, Home Assistant",
+        "select_scopes": "Vyberte rozsah",
+        "expiration": "Platnosť",
+        "never_expires": "Nikdy nevyprší",
+        "expires_30days": "30 dní",
+        "expires_90days": "90 dní",
+        "expires_1year": "1 rok",
+        "expires_custom": "Vlastný dátum",
+        "created": "API token bol úspešne vytvorený",
+        "create_error": "Nepodarilo sa vytvoriť API token",
+        "token_created": "Token bol vytvorený",
+        "copy_warning": "Nezabudnite si teraz skopírovať svoj token. Už ho nebudete môcť znovu zobraziť!",
+        "your_token": "Váš token",
+        "copied": "Token bol skopírovaný do schránky",
+        "done": "Hotovo",
+        "scopes": "Rozsah",
+        "created_at": "Vytvorený",
+        "last_used": "Naposledy použitý",
+        "usage_count": "Počet použití",
+        "expires_at": "Platnosť do",
+        "inactive": "Neaktívny",
+        "expired": "Platnosť vypršala",
+        "activate": "Aktivovať",
+        "deactivate": "Deaktivovať",
+        "activated": "Token bol aktivovaný",
+        "deactivated": "Token bol deaktivovaný",
+        "revoke": "Odstrániť",
+        "revoke_confirm": "Naozaj chcete odstrániť token „{name}“? Táto akcia sa nedá vrátiť späť.",
+        "revoked": "Token bol úspešne odstránený",
+        "revoke_error": "Odstránenie tokenu sa nepodarilo",
+        "load_error": "Nepodarilo sa načítať API tokeny",
+        "update_error": "Nepodarilo sa aktualizovať token"
     }
 }

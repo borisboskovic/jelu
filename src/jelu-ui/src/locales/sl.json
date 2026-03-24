@@ -97,6 +97,7 @@
         "yes": "Da",
         "no": "Ne",
         "do_nothing": "Ne naredi ničesar",
+        "cancel": "Cancel",
         "add": "Dodaj",
         "add_to_my_books": "Še ni v vaših knjigah, kliknite, da jo dodate",
         "add_translator": "Dodaj prevajalca",
@@ -125,7 +126,8 @@
         "find-series": "find a series",
         "delete_this_author": "Delete this author from {nb} book(s) and from database ?",
         "orphan_authors": "orphan authors",
-        "find-authors": "find authors"
+        "find-authors": "find authors",
+        "list_empty": "list is empty"
     },
     "settings": {
         "pick_language": "Izberite svoj jezik",
@@ -150,7 +152,9 @@
         "shelves": "Police",
         "shelves_max_number_reached": "Dosegli ste maksimalno število polic. Odstranite obstoječe police preden dodate nove.",
         "shelf_choose_tag": "Izberite oznako, da ustvarite ustrezno polico",
-        "custom_lists": "custom lists"
+        "custom_lists": "custom lists",
+        "choose_currency": "Select your currency",
+        "api_tokens": "API Tokens"
     },
     "user": {
         "log_first": "Prosim, najprej se prijavite"
@@ -172,7 +176,8 @@
         "modification_date": "Datum spremembe",
         "page_count": "Page count",
         "user_avg_rating": "my average rating",
-        "avg_rating": "average rating"
+        "avg_rating": "average rating",
+        "name": "name"
     },
     "reading_events": {
         "finished": "končano",
@@ -201,7 +206,9 @@
         "only_not_in_my_list": "Samo knjige, ki niso na mojih seznamih",
         "owned": "Knjiga je v lasti",
         "role": "Vloga",
-        "borrowed": "Knjiga je izposojena"
+        "borrowed": "Knjiga je izposojena",
+        "filter": "filter",
+        "type_to_filter": "type to filter"
     },
     "book": {
         "owned": "v lasti",
@@ -236,7 +243,9 @@
         "translator": "prevajalec | prevajalci",
         "borrowed": "izposojeno",
         "current_page_number": "current page number",
-        "narrator": "narrator | narrators"
+        "narrator": "narrator | narrators",
+        "original_title": "original title",
+        "price": "price"
     },
     "authors_merge": {
         "authors_merging_utility": "Združevanje avtorjev",
@@ -330,7 +339,8 @@
         "dropped": "dropped",
         "total": "total",
         "read": "read",
-        "unread": "unread"
+        "unread": "unread",
+        "prices_sum": "prices sum"
     },
     "history": {
         "years": "let"
@@ -397,7 +407,8 @@
             "EXIT_CODE_NOT_ZERO": "fetch metadata plugin exited abnormally",
             "EXCEPTION_CAUGHT": "exception was raised while calling metadata plugin"
         },
-        "details": "error details"
+        "details": "error details",
+        "positive_only": "must be positive"
     },
     "lists": {
         "create_list": "create a custom list",
@@ -412,5 +423,45 @@
         "empty": "list is empty",
         "edit_list": "edit the list",
         "update_list": "update the list"
+    },
+    "api_tokens": {
+        "title": "API Tokens",
+        "description": "Create API tokens to enable programmatic access to the Jelu API. Tokens can be used for automation scripts, third-party integrations, and CI/CD pipelines.",
+        "create": "Create Token",
+        "create_new": "Create New API Token",
+        "no_tokens": "No API tokens yet. Create one to get started.",
+        "token_name": "Token Name",
+        "name_placeholder": "e.g., Backup Script, Home Assistant",
+        "select_scopes": "Select Scopes",
+        "expiration": "Expiration",
+        "never_expires": "Never expires",
+        "expires_30days": "30 days",
+        "expires_90days": "90 days",
+        "expires_1year": "1 year",
+        "expires_custom": "Custom date",
+        "created": "API token created successfully",
+        "create_error": "Failed to create API token",
+        "token_created": "Token Created",
+        "copy_warning": "Make sure to copy your token now. You won't be able to see it again!",
+        "your_token": "Your Token",
+        "copied": "Token copied to clipboard",
+        "done": "Done",
+        "scopes": "Scopes",
+        "created_at": "Created",
+        "last_used": "Last used",
+        "usage_count": "Uses",
+        "expires_at": "Expires",
+        "inactive": "Inactive",
+        "expired": "Expired",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "activated": "Token activated",
+        "deactivated": "Token deactivated",
+        "revoke": "Revoke",
+        "revoke_confirm": "Are you sure you want to revoke the token '{name}'? This action cannot be undone.",
+        "revoked": "Token revoked successfully",
+        "revoke_error": "Failed to revoke token",
+        "load_error": "Failed to load API tokens",
+        "update_error": "Failed to update token"
     }
 }

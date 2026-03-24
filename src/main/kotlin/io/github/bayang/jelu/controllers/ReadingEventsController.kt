@@ -4,15 +4,18 @@ import io.github.bayang.jelu.config.JeluProperties
 import io.github.bayang.jelu.dao.ReadingEventType
 import io.github.bayang.jelu.dto.CreateReadingEventDto
 import io.github.bayang.jelu.dto.JeluUser
+import io.github.bayang.jelu.dto.MonthStatsCentsDto
 import io.github.bayang.jelu.dto.MonthStatsDto
 import io.github.bayang.jelu.dto.ReadingEventDto
+import io.github.bayang.jelu.dto.ReadingEventStatsDto
 import io.github.bayang.jelu.dto.UpdateReadingEventDto
+import io.github.bayang.jelu.dto.YearStatsCentsDto
 import io.github.bayang.jelu.dto.YearStatsDto
 import io.github.bayang.jelu.dto.assertIsJeluUser
 import io.github.bayang.jelu.service.ReadingEventService
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import jakarta.validation.Valid
-import mu.KotlinLogging
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
@@ -44,7 +47,6 @@ class ReadingEventsController(
     private val repository: ReadingEventService,
     private val properties: JeluProperties,
 ) {
-
     @GetMapping(path = ["/reading-events"])
     fun readingEvents(
         @RequestParam(name = "eventTypes", required = false) eventTypes: List<ReadingEventType>?,
@@ -62,8 +64,10 @@ class ReadingEventsController(
         @RequestParam(name = "endedBefore", required = false)
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         endedBefore: LocalDate?,
-        @PageableDefault(page = 0, size = 20, direction = Sort.Direction.DESC, sort = ["modificationDate"]) @ParameterObject pageable: Pageable,
-    ): Page<ReadingEventDto> = repository.findAll(eventTypes, userId, bookId, startedAfter, startedBefore, endedAfter, endedBefore, pageable)
+        @PageableDefault(page = 0, size = 20, direction = Sort.Direction.DESC, sort = ["modificationDate"]) @ParameterObject pageable:
+            Pageable,
+    ): Page<ReadingEventDto> =
+        repository.findAll(eventTypes, userId, bookId, startedAfter, startedBefore, endedAfter, endedBefore, pageable)
 
     @GetMapping(path = ["/reading-events/me"])
     fun myReadingEvents(
@@ -81,11 +85,21 @@ class ReadingEventsController(
         @RequestParam(name = "endedBefore", required = false)
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
         endedBefore: LocalDate?,
-        @PageableDefault(page = 0, size = 20, direction = Sort.Direction.DESC, sort = ["modificationDate"]) @ParameterObject pageable: Pageable,
+        @PageableDefault(page = 0, size = 20, direction = Sort.Direction.DESC, sort = ["modificationDate"]) @ParameterObject pageable:
+            Pageable,
         principal: Authentication,
     ): Page<ReadingEventDto> {
         assertIsJeluUser(principal.principal)
-        return repository.findAll(eventTypes, (principal.principal as JeluUser).user.id, bookId, startedAfter, startedBefore, endedAfter, endedBefore, pageable)
+        return repository.findAll(
+            eventTypes,
+            (principal.principal as JeluUser).user.id,
+            bookId,
+            startedAfter,
+            startedBefore,
+            endedAfter,
+            endedBefore,
+            pageable,
+        )
     }
 
     @PostMapping(path = ["/reading-events"])
@@ -106,9 +120,7 @@ class ReadingEventsController(
         @RequestBody
         @Valid
         readingEvent: UpdateReadingEventDto,
-    ): ReadingEventDto {
-        return repository.updateReadingEvent(readingEventId, readingEvent)
-    }
+    ): ReadingEventDto = repository.updateReadingEvent(readingEventId, readingEvent)
 
     @ApiResponse(responseCode = "204", description = "Deleted the reading event")
     @DeleteMapping(path = ["/reading-events/{id}"])
@@ -121,15 +133,24 @@ class ReadingEventsController(
     }
 
     @GetMapping(path = ["/stats"])
-    fun stats(
-        principal: Authentication,
-    ): ResponseEntity<List<YearStatsDto>> {
-        var events: Page<ReadingEventDto>
+    fun stats(principal: Authentication): ResponseEntity<List<YearStatsDto>> {
+        var events: Page<ReadingEventStatsDto>
         var currentPage = 0
         val pageSize = 200
-        val yearStats = mutableMapOf<Int, YearStatsDto>()
+        val yearStats = mutableMapOf<Int, YearStatsCentsDto>()
+        val pricesAlreadyAdded = mutableMapOf<Int, MutableSet<UUID>>()
         do {
-            events = repository.findAll(listOf(ReadingEventType.FINISHED, ReadingEventType.DROPPED), (principal.principal as JeluUser).user.id, null, null, null, null, null, PageRequest.of(currentPage, pageSize, Sort.by("endDate, asc")))
+            events =
+                repository.findAllForStats(
+                    listOf(ReadingEventType.FINISHED, ReadingEventType.DROPPED),
+                    (principal.principal as JeluUser).user.id,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    PageRequest.of(currentPage, pageSize, Sort.by("endDate, asc")),
+                )
             currentPage++
             events.forEach {
                 val year = OffsetDateTime.ofInstant(it.endDate, ZoneId.systemDefault()).year
@@ -137,18 +158,38 @@ class ReadingEventsController(
                     if (it.eventType == ReadingEventType.DROPPED) {
                         yearStats[year] = yearStats[year]!!.copy(dropped = yearStats[year]!!.dropped + 1)
                     } else if (it.eventType == ReadingEventType.FINISHED) {
-                        yearStats[year] = yearStats[year]!!.copy(finished = yearStats[year]!!.finished + 1, pageCount = yearStats[year]!!.pageCount + (it.userBook.book.pageCount ?: 0))
+                        var price: Long = 0
+                        if (it.userBook.id != null) {
+                            if (!pricesAlreadyAdded.containsKey(year)) {
+                                pricesAlreadyAdded[year] = mutableSetOf()
+                            }
+                            if (!pricesAlreadyAdded[year]!!.contains(it.userBook.id)) {
+                                pricesAlreadyAdded[year]!!.add(it.userBook.id)
+                                price = it.priceInCents ?: 0
+                            }
+                        }
+                        yearStats[year] =
+                            yearStats[year]!!.copy(
+                                finished = yearStats[year]!!.finished + 1,
+                                pageCount =
+                                    yearStats[year]!!.pageCount + (it.userBook.book.pageCount ?: 0),
+                                priceInCents =
+                                    yearStats[year]!!.priceInCents + price,
+                            )
                     }
                 } else {
                     if (it.eventType == ReadingEventType.DROPPED) {
-                        yearStats[year] = YearStatsDto(year = year, dropped = 1)
+                        yearStats[year] = YearStatsCentsDto(year = year, dropped = 1)
                     } else if (it.eventType == ReadingEventType.FINISHED) {
-                        yearStats[year] = YearStatsDto(year = year, finished = 1, pageCount = it.userBook.book.pageCount ?: 0)
+                        val price = it.priceInCents ?: 0
+                        pricesAlreadyAdded[year] = mutableSetOf(it.userBook.id!!)
+                        yearStats[year] =
+                            YearStatsCentsDto(year = year, finished = 1, pageCount = it.userBook.book.pageCount ?: 0, priceInCents = price)
                     }
                 }
             }
         } while (!events.isEmpty)
-        return ResponseEntity.ok(yearStats.values.sortedBy { it.year })
+        return ResponseEntity.ok(yearStats.values.map { it.toYearStatsDto() }.sortedBy { it.year })
     }
 
     @GetMapping(path = ["/stats/{year}"])
@@ -156,12 +197,23 @@ class ReadingEventsController(
         @PathVariable("year") year: Int,
         principal: Authentication,
     ): ResponseEntity<List<MonthStatsDto>> {
-        var events: Page<ReadingEventDto>
+        var events: Page<ReadingEventStatsDto>
         var currentPage = 0
         val pageSize = 200
-        val monthStats = mutableMapOf<Int, MonthStatsDto>()
+        val monthStats = mutableMapOf<Int, MonthStatsCentsDto>()
+        val pricesAlreadyAdded = mutableMapOf<Int, MutableSet<UUID>>()
         do {
-            events = repository.findAll(listOf(ReadingEventType.FINISHED, ReadingEventType.DROPPED), (principal.principal as JeluUser).user.id, null, null, null, null, null, PageRequest.of(currentPage, pageSize))
+            events =
+                repository.findAllForStats(
+                    listOf(ReadingEventType.FINISHED, ReadingEventType.DROPPED),
+                    (principal.principal as JeluUser).user.id,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    PageRequest.of(currentPage, pageSize),
+                )
             currentPage++
             // FIXME use date filtering in repository method now
             events.filter { OffsetDateTime.ofInstant(it.endDate, ZoneId.systemDefault()).year == year }.forEach {
@@ -171,26 +223,50 @@ class ReadingEventsController(
                     if (it.eventType == ReadingEventType.DROPPED) {
                         monthStats[month] = monthStats[month]!!.copy(dropped = monthStats[month]!!.dropped + 1)
                     } else if (it.eventType == ReadingEventType.FINISHED) {
-                        monthStats[month] = monthStats[month]!!.copy(finished = monthStats[month]!!.finished + 1, pageCount = monthStats[month]!!.pageCount + (it.userBook.book.pageCount ?: 0))
+                        var price: Long = 0
+                        if (it.userBook.id != null && !pricesAlreadyAdded[year]!!.contains(it.userBook.id)) {
+                            pricesAlreadyAdded[year]!!.add(it.userBook.id)
+                            price = it.priceInCents ?: 0
+                        }
+                        monthStats[month] =
+                            monthStats[month]!!.copy(
+                                finished = monthStats[month]!!.finished + 1,
+                                pageCount =
+                                    monthStats[month]!!.pageCount + (it.userBook.book.pageCount ?: 0),
+                                priceInCents =
+                                    monthStats[month]!!.priceInCents + price,
+                            )
                     }
                 } else {
                     if (it.eventType == ReadingEventType.DROPPED) {
-                        monthStats[month] = MonthStatsDto(year = year, dropped = 1, month = month)
+                        monthStats[month] = MonthStatsCentsDto(year = year, dropped = 1, month = month)
                     } else if (it.eventType == ReadingEventType.FINISHED) {
-                        monthStats[month] = MonthStatsDto(year = year, finished = 1, month = month, pageCount = it.userBook.book.pageCount ?: 0)
+                        val price = it.priceInCents ?: 0
+                        pricesAlreadyAdded[year] = mutableSetOf(it.userBook.id!!)
+                        monthStats[month] =
+                            MonthStatsCentsDto(
+                                year = year,
+                                finished = 1,
+                                month = month,
+                                pageCount = it.userBook.book.pageCount ?: 0,
+                                priceInCents = price,
+                            )
                     }
                 }
             }
         } while (!events.isEmpty)
-        return ResponseEntity.ok(monthStats.values.sortedBy { it.month })
+        return ResponseEntity.ok(monthStats.values.map { it.toMonthStatsDto() }.sortedBy { it.month })
     }
 
     @ApiResponse(description = "Return a list of years for which there are reading events")
     @GetMapping(path = ["/stats/years"])
-    fun years(
-        principal: Authentication,
-    ): ResponseEntity<List<Int>> {
-        val years = repository.findYears(listOf(ReadingEventType.FINISHED, ReadingEventType.DROPPED), (principal.principal as JeluUser).user.id, null)
+    fun years(principal: Authentication): ResponseEntity<List<Int>> {
+        val years =
+            repository.findYears(
+                listOf(ReadingEventType.FINISHED, ReadingEventType.DROPPED),
+                (principal.principal as JeluUser).user.id,
+                null,
+            )
         return if (years != null && years.isNotEmpty()) {
             ResponseEntity.ok(years.sorted())
         } else {

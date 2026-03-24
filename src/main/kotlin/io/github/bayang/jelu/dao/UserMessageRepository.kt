@@ -4,7 +4,7 @@ import io.github.bayang.jelu.dto.CreateUserMessageDto
 import io.github.bayang.jelu.dto.UpdateUserMessageDto
 import io.github.bayang.jelu.dto.UserDto
 import io.github.bayang.jelu.utils.nowInstant
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.jetbrains.exposed.sql.Expression
 import org.jetbrains.exposed.sql.JoinType
 import org.jetbrains.exposed.sql.SortOrder
@@ -21,8 +21,10 @@ private val logger = KotlinLogging.logger {}
 
 @Repository
 class UserMessageRepository {
-
-    fun save(createUserMessageDto: CreateUserMessageDto, user: UserDto): UserMessage {
+    fun save(
+        createUserMessageDto: CreateUserMessageDto,
+        user: UserDto,
+    ): UserMessage {
         val instant: Instant = nowInstant()
         return UserMessage.new {
             this.creationDate = instant
@@ -41,8 +43,11 @@ class UserMessageRepository {
         messageCategories: List<MessageCategory>?,
         pageable: Pageable,
     ): Page<UserMessage> {
-        val query = UserMessageTable.join(UserTable, JoinType.LEFT)
-            .selectAll().where { UserMessageTable.user eq user.id }
+        val query =
+            UserMessageTable
+                .join(UserTable, JoinType.LEFT)
+                .selectAll()
+                .where { UserMessageTable.user eq user.id }
         if (read != null) {
             query.andWhere { UserMessageTable.read eq read }
         }
@@ -50,8 +55,10 @@ class UserMessageRepository {
             query.andWhere { UserMessageTable.messageCategory inList messageCategories }
         }
         val total = query.count()
-        query.limit(pageable.pageSize, pageable.offset)
-        val orders: Array<Pair<Expression<*>, SortOrder>> = parseSorts(pageable.sort, Pair(UserMessageTable.modificationDate, SortOrder.DESC_NULLS_LAST), UserMessageTable)
+        query.limit(pageable.pageSize)
+        query.offset(pageable.offset)
+        val orders: Array<Pair<Expression<*>, SortOrder>> =
+            parseSorts(pageable.sort, Pair(UserMessageTable.modificationDate, SortOrder.DESC_NULLS_LAST), UserMessageTable)
         query.orderBy(*orders)
         val res = UserMessage.wrapRows(query).toList()
         return PageImpl(
@@ -61,8 +68,11 @@ class UserMessageRepository {
         )
     }
 
-    fun update(userMessageId: UUID, updateDto: UpdateUserMessageDto): UserMessage {
-        return UserMessage[userMessageId].apply {
+    fun update(
+        userMessageId: UUID,
+        updateDto: UpdateUserMessageDto,
+    ): UserMessage =
+        UserMessage[userMessageId].apply {
             this.modificationDate = nowInstant()
             if (updateDto.read != null) {
                 this.read = updateDto.read
@@ -77,7 +87,6 @@ class UserMessageRepository {
                 this.messageCategory = updateDto.category
             }
         }
-    }
 
     fun delete(userMessageId: UUID) {
         UserMessage[userMessageId].delete()

@@ -97,6 +97,7 @@
         "yes": "Sim",
         "no": "Não",
         "do_nothing": "Não fazer nada",
+        "cancel": "Cancel",
         "add": "Adicionar",
         "add_to_my_books": "Ainda não está nos seus livros, clique para adicionar",
         "add_translator": "Adicionar um tradutor",
@@ -125,7 +126,8 @@
         "find-series": "encontrar uma série",
         "delete_this_author": "Excluir este autor de {nb} livro(s) e da base de dados?",
         "orphan_authors": "autores órfãos",
-        "find-authors": "encontrar autores"
+        "find-authors": "encontrar autores",
+        "list_empty": "list is empty"
     },
     "settings": {
         "pick_language": "Escolha o seu idioma",
@@ -150,7 +152,9 @@
         "shelves": "Prateleiras",
         "shelves_max_number_reached": "O número máximo de prateleiras foi atingido. Apague já existentes para adicionar mais.",
         "shelf_choose_tag": "Escolha uma etiqueta para criar a prateleira correspondente",
-        "custom_lists": "custom lists"
+        "custom_lists": "listas personalizadas",
+        "choose_currency": "Select your currency",
+        "api_tokens": "API Tokens"
     },
     "user": {
         "log_first": "Por favor, inicie sessão primeiro"
@@ -172,7 +176,8 @@
         "modification_date": "Data de modificação",
         "page_count": "Número de páginas",
         "user_avg_rating": "minha média de classificação",
-        "avg_rating": "classificação média"
+        "avg_rating": "classificação média",
+        "name": "name"
     },
     "reading_events": {
         "finished": "terminado",
@@ -201,7 +206,9 @@
         "only_not_in_my_list": "Apenas livros que não constam das minhas listas",
         "owned": "O Livro pertence",
         "role": "Função",
-        "borrowed": "O livro é emprestado"
+        "borrowed": "O livro é emprestado",
+        "filter": "filter",
+        "type_to_filter": "type to filter"
     },
     "book": {
         "owned": "possuído",
@@ -236,7 +243,9 @@
         "translator": "tradutor | tradutores",
         "borrowed": "emprestado",
         "current_page_number": "número da página atual",
-        "narrator": "narrador | narradores"
+        "narrator": "narrador | narradores",
+        "original_title": "original title",
+        "price": "price"
     },
     "authors_merge": {
         "authors_merging_utility": "Ferramenta de fusão de autores",
@@ -259,7 +268,7 @@
         "wikipedia_page": "página wikipédia",
         "goodreads_page": "página goodreads",
         "twitter_page": "página twitter",
-        "x_page": "X page",
+        "x_page": "Página X",
         "facebook_page": "página facebook",
         "instagram_page": "página instagram",
         "personal_notes": "notas pessoais",
@@ -294,7 +303,7 @@
         "password_not_match": "o campos de palavra-passe não coincide",
         "login_length": "o utilizador deve ter no mínimo 3 caracteres",
         "password_length": "a palavra-passe deve ter no mínimo 3 caracteres",
-        "username": "username"
+        "username": "utilizador"
     },
     "admin_user": {
         "create_user": "criar utilizador",
@@ -330,7 +339,8 @@
         "dropped": "abandonado",
         "total": "total",
         "read": "lido",
-        "unread": "não lido"
+        "unread": "não lido",
+        "prices_sum": "prices sum"
     },
     "history": {
         "years": "anos"
@@ -346,8 +356,8 @@
         "add": "Adicionar",
         "remove": "Remover",
         "choose_tag": "Escolha a etiqueta que deseja adicionar ou remover",
-        "add_tag": "add tag",
-        "remove_tag": "remove tag"
+        "add_tag": "adicionar uma etiqueta",
+        "remove_tag": "remover etiqueta"
     },
     "reviews": {
         "create_review": "Criar avaliação",
@@ -397,20 +407,61 @@
             "EXIT_CODE_NOT_ZERO": "o plugin de metadados terminou anormalmente",
             "EXCEPTION_CAUGHT": "uma exceção foi gerada durante a chamada do plugin de metadados"
         },
-        "details": "detalhes do erro"
+        "details": "detalhes do erro",
+        "positive_only": "must be positive"
     },
     "lists": {
-        "create_list": "create a custom list",
-        "name": "name",
-        "public": "public",
-        "actionable": "actionable",
-        "actionable_desc": "Items in an actionable list can be clicked to be removed.",
-        "tags": "tags",
-        "tags_desc": "The list will display the items that match all the chosen tags.",
-        "create": "create",
-        "remove": "remove selected",
-        "empty": "list is empty",
-        "edit_list": "edit the list",
-        "update_list": "update the list"
+        "create_list": "criar uma lista personalizada",
+        "name": "nome",
+        "public": "público",
+        "actionable": "acionável",
+        "actionable_desc": "Itens de uma lista acionável podem ser clicados para serem removidos.",
+        "tags": "etiquetas",
+        "tags_desc": "A lista irá exibir os itens que correspondem a todas as etiquetas escolhidos.",
+        "create": "criar",
+        "remove": "remover selecionado",
+        "empty": "lista está vazia",
+        "edit_list": "editar a lista",
+        "update_list": "atualizar a lista"
+    },
+    "api_tokens": {
+        "title": "API Tokens",
+        "description": "Create API tokens to enable programmatic access to the Jelu API. Tokens can be used for automation scripts, third-party integrations, and CI/CD pipelines.",
+        "create": "Create Token",
+        "create_new": "Create New API Token",
+        "no_tokens": "No API tokens yet. Create one to get started.",
+        "token_name": "Token Name",
+        "name_placeholder": "e.g., Backup Script, Home Assistant",
+        "select_scopes": "Select Scopes",
+        "expiration": "Expiration",
+        "never_expires": "Never expires",
+        "expires_30days": "30 days",
+        "expires_90days": "90 days",
+        "expires_1year": "1 year",
+        "expires_custom": "Custom date",
+        "created": "API token created successfully",
+        "create_error": "Failed to create API token",
+        "token_created": "Token Created",
+        "copy_warning": "Make sure to copy your token now. You won't be able to see it again!",
+        "your_token": "Your Token",
+        "copied": "Token copied to clipboard",
+        "done": "Done",
+        "scopes": "Scopes",
+        "created_at": "Created",
+        "last_used": "Last used",
+        "usage_count": "Uses",
+        "expires_at": "Expires",
+        "inactive": "Inactive",
+        "expired": "Expired",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "activated": "Token activated",
+        "deactivated": "Token deactivated",
+        "revoke": "Revoke",
+        "revoke_confirm": "Are you sure you want to revoke the token '{name}'? This action cannot be undone.",
+        "revoked": "Token revoked successfully",
+        "revoke_error": "Failed to revoke token",
+        "load_error": "Failed to load API tokens",
+        "update_error": "Failed to update token"
     }
 }

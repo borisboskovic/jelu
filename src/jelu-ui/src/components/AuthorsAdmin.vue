@@ -11,6 +11,7 @@ import { LibraryFilter } from "../model/LibraryFilter"
 import { Page } from "../model/Page"
 import dataService from "../services/DataService"
 import { ObjectUtils } from "../utils/ObjectUtils"
+import { Role } from "../model/Role"
 
 const oruga = useOruga()
 
@@ -31,10 +32,10 @@ watch([page, sortQuery], (newVal, oldVal) => {
   }
 })
 
-let orphanAuthors: Ref<Array<Author>> = ref([]);
+const orphanAuthors: Ref<Array<Author>> = ref([]);
 const isOrphanFetching = ref(false)
 
-let filteredAuthors: Ref<Array<Author>> = ref([]);
+const filteredAuthors: Ref<Array<Author>> = ref([]);
 const isFetching = ref(false)
 
 const author: Ref<Author> = ref({name: ""})
@@ -43,7 +44,7 @@ const getBooksIsLoading: Ref<boolean> = ref(false)
 
 function getFilteredAuthors(text: string) {
   isFetching.value = true
-  dataService.findAuthorByCriteria(text).then((data) => filteredAuthors.value = data.content)
+  dataService.findAuthorByCriteria(Role.ANY, text).then((data) => filteredAuthors.value = data.content)
   isFetching.value = false
 }
 
@@ -192,23 +193,23 @@ const options = computed(() => {
       <h1 class="typewriter text-2xl mb-3 capitalize">
         {{ t('labels.find-authors') }} :
       </h1>
-      <div class="field border-2 border-accent">
-        <o-field>
-          <o-autocomplete
-            :options="options"
-            clear-on-select
-            :loading="isFetching"
-            :debounce="100"
-            @input="getFilteredAuthors"
-            @select="selectAuthor"
-          >
-            <template #default="{ value }">
-              <div class="jl-taginput-item">
-                {{ value.name }}
-              </div>
-            </template>
-          </o-autocomplete>
-        </o-field>
+      <div class="field">
+        <o-autocomplete
+          :options="options"
+          clear-on-select
+          :loading="isFetching"
+          :debounce="100"
+          class="w-full"
+          :input-classes="{rootClass:'border-2 border-accent w-full'}"
+          @input="getFilteredAuthors"
+          @select="selectAuthor"
+        >
+          <template #default="{ value }">
+            <div class="jl-taginput-item">
+              {{ value.name }}
+            </div>
+          </template>
+        </o-autocomplete>
       </div>
       <div
         v-if="author.id != null"
@@ -246,5 +247,9 @@ const options = computed(() => {
   </div>
 </template>
 
-<style lang="scss" scoped>
+<style scoped>
+  .o-dropdown.o-dropdown--position-auto.o-autocomplete, 
+  .o-dropdown.o-dropdown--position-bottom.o-autocomplete {
+    @apply w-full;
+  }
 </style>

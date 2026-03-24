@@ -5,7 +5,7 @@ import io.github.bayang.jelu.dao.UserRepository
 import io.github.bayang.jelu.dto.CreateUserDto
 import io.github.bayang.jelu.dto.JeluUser
 import io.github.bayang.jelu.dto.UpdateUserDto
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.ldap.core.DirContextAdapter
 import org.springframework.ldap.core.DirContextOperations
@@ -23,7 +23,6 @@ private val logger = KotlinLogging.logger {}
 class JeluLdapUserDetailsContextMapper(
     private val userRepository: UserRepository,
 ) : UserDetailsContextMapper {
-
     @Transactional
     override fun mapUserFromContext(
         ctx: DirContextOperations?,
@@ -66,7 +65,10 @@ class JeluLdapUserDetailsContextMapper(
         return isAdmin
     }
 
-    override fun mapUserToContext(user: UserDetails?, ctx: DirContextAdapter?) {
+    override fun mapUserToContext(
+        user: UserDetails?,
+        ctx: DirContextAdapter?,
+    ) {
         TODO("Not yet implemented")
     }
 

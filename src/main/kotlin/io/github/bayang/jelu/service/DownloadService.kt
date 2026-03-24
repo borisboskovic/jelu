@@ -1,7 +1,7 @@
 package io.github.bayang.jelu.service
 
 import io.github.bayang.jelu.utils.imageName
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.apache.commons.io.FilenameUtils
 import org.springframework.stereotype.Service
 import java.io.File
@@ -15,8 +15,12 @@ private val logger = KotlinLogging.logger {}
 
 @Service
 class DownloadService {
-
-    fun download(sourceUrl: String, title: String, bookId: String, targetFolder: String): String {
+    fun download(
+        sourceUrl: String,
+        title: String,
+        bookId: String,
+        targetFolder: String,
+    ): String {
         try {
             val url: URL = URL(sourceUrl)
             logger.debug { "path ${url.path} file ${url.file}" }

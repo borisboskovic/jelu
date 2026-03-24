@@ -2,6 +2,7 @@ package io.github.bayang.jelu.controllers
 
 import io.github.bayang.jelu.errors.JeluAuthenticationException
 import io.github.bayang.jelu.errors.JeluException
+import io.github.bayang.jelu.errors.JeluNotFoundException
 import io.github.bayang.jelu.errors.JeluValidationException
 import jakarta.validation.ConstraintViolationException
 import org.jetbrains.exposed.dao.exceptions.EntityNotFoundException
@@ -15,13 +16,10 @@ import org.springframework.web.bind.annotation.ResponseStatus
 
 @ControllerAdvice
 class GlobalControllerExceptionHandler {
-
     @ExceptionHandler(ConstraintViolationException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
-    fun handleConstraintValidationException(
-        e: ConstraintViolationException,
-    ): ApiError =
+    fun handleConstraintValidationException(e: ConstraintViolationException): ApiError =
         ApiError(
             "Constraint violation",
             e.constraintViolations.map { ApiValidationErrorItem(it.propertyPath.toString(), it.message) },
@@ -30,9 +28,7 @@ class GlobalControllerExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
-    fun handleMethodArgumentNotValidException(
-        e: MethodArgumentNotValidException,
-    ): ApiError =
+    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ApiError =
         ApiError(
             "Validation error(s)",
             e.bindingResult.fieldErrors.map { ApiValidationErrorItem(it.field, it.defaultMessage) },
@@ -41,42 +37,32 @@ class GlobalControllerExceptionHandler {
     @ExceptionHandler(EntityNotFoundException::class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     @ResponseBody
-    fun handleNonExistingEntityException(
-        e: EntityNotFoundException,
-    ): ApiError =
-        ApiError(e.message)
+    fun handleNonExistingEntityException(e: EntityNotFoundException): ApiError = ApiError(e.message)
 
     @ExceptionHandler(HttpMessageNotReadableException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
-    fun handleHttpMessageNotReadableException(
-        e: HttpMessageNotReadableException,
-    ): ApiError =
-        ApiError(e.message)
+    fun handleHttpMessageNotReadableException(e: HttpMessageNotReadableException): ApiError = ApiError(e.message)
 
     @ExceptionHandler(JeluException::class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     @ResponseBody
-    fun handleJeluException(
-        e: JeluException,
-    ): ApiError =
-        ApiError(e.message)
+    fun handleJeluException(e: JeluException): ApiError = ApiError(e.message)
 
     @ExceptionHandler(JeluAuthenticationException::class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ResponseBody
-    fun handleJeluAuthenticationException(
-        e: JeluAuthenticationException,
-    ): ApiError =
-        ApiError(e.message)
+    fun handleJeluAuthenticationException(e: JeluAuthenticationException): ApiError = ApiError(e.message)
 
     @ExceptionHandler(JeluValidationException::class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ResponseBody
-    fun handleJeluValidationException(
-        e: JeluValidationException,
-    ): ApiError =
-        ApiError(e.message)
+    fun handleJeluValidationException(e: JeluValidationException): ApiError = ApiError(e.message)
+
+    @ExceptionHandler(JeluNotFoundException::class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    fun handleJeluNotFoundException(e: JeluNotFoundException): ApiError = ApiError(e.message)
 }
 
 data class ApiError(

@@ -7,7 +7,7 @@ import io.github.bayang.jelu.dto.CustomListRemoveDto
 import io.github.bayang.jelu.errors.JeluAuthenticationException
 import io.github.bayang.jelu.search.LuceneEntity
 import io.github.bayang.jelu.search.LuceneHelper
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.Pageable
@@ -24,25 +24,21 @@ class CustomListService(
     private val luceneHelper: LuceneHelper,
     private val bookService: BookService,
 ) {
+    @Transactional
+    fun save(
+        createListDto: CustomListDto,
+        userId: UUID,
+    ): CustomListDto = customListRepository.save(createListDto, userId).toCustomListDto()
 
     @Transactional
-    fun save(createListDto: CustomListDto, userId: UUID): CustomListDto {
-        return customListRepository.save(createListDto, userId).toCustomListDto()
-    }
-
-    @Transactional
-    fun update(createListDto: CustomListDto): CustomListDto {
-        return customListRepository.update(createListDto).toCustomListDto()
-    }
+    fun update(createListDto: CustomListDto): CustomListDto = customListRepository.update(createListDto).toCustomListDto()
 
     @Transactional
     fun find(
         user: UUID,
         name: String?,
         pageable: Pageable,
-    ): Page<CustomListDto> {
-        return customListRepository.find(user, name, pageable).map { it.toCustomListDto() }
-    }
+    ): Page<CustomListDto> = customListRepository.find(user, name, pageable).map { it.toCustomListDto() }
 
     @Transactional
     fun delete(listId: UUID) {
@@ -53,7 +49,11 @@ class CustomListService(
     fun findById(listId: UUID): CustomListDto = customListRepository.findById(listId).toCustomListDto()
 
     @Transactional
-    fun findListBooks(listId: UUID, pageable: Pageable, principal: Authentication?): Page<BookDto> {
+    fun findListBooks(
+        listId: UUID,
+        pageable: Pageable,
+        principal: Authentication?,
+    ): Page<BookDto> {
         val list = customListRepository.findById(listId)
         if (!list.public && principal == null) {
             throw JeluAuthenticationException("Resource unauthorized")

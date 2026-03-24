@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useOruga } from "@oruga-ui/oruga-next";
-import IsbnVerify from '@saekitominaga/isbn-verify';
+import IsbnVerify from '@w0s/isbn-verify';
 import { useTitle } from '@vueuse/core';
 import { computed, reactive, Ref, ref, watch } from "vue";
 import { useI18n } from 'vue-i18n';
@@ -22,6 +22,8 @@ import AutoImportFormModalVue from "./AutoImportFormModal.vue";
 import ImagePickerModal from "./ImagePickerModal.vue";
 import SeriesCompleteInput from "./SeriesCompleteInput.vue";
 import ClosableBadge from "./ClosableBadge.vue";
+import FormField from "./FormField.vue";
+import { Role } from "../model/Role";
 
 const { t } = useI18n({
       inheritLocale: true,
@@ -58,7 +60,9 @@ const form = reactive({
   openlibraryId: "",
   noosfereId: "",
   inventaireId: "",
-  language: ""
+  language: "",
+  originalTitle: "",
+  price: null
 });
 const eventType = ref(null);
 const eventDate: Ref<Date|null> = ref(new Date());
@@ -94,31 +98,31 @@ watch(() => [form.currentPageNumber, form.percentRead, form.pageCount],(newVal, 
   }
 })
 
-let filteredAuthors: Ref<Array<Wrapper>> = ref([]);
-let authors: Ref<Array<Author>> = ref([]);
+const filteredAuthors: Ref<Array<Wrapper>> = ref([]);
+const authors: Ref<Array<Author>> = ref([]);
 
-let filteredTags: Ref<Array<Wrapper>> = ref([]);
-let tags: Ref<Array<Tag>> = ref([]);
+const filteredTags: Ref<Array<Wrapper>> = ref([]);
+const tags: Ref<Array<Tag>> = ref([]);
 
-let translators: Ref<Array<Author>> = ref([]);
-let filteredTranslators: Ref<Array<Wrapper>> = ref([]);
+const translators: Ref<Array<Author>> = ref([]);
+const filteredTranslators: Ref<Array<Wrapper>> = ref([]);
 
-let narrators: Ref<Array<Author>> = ref([]);
-let filteredNarrators: Ref<Array<Wrapper>> = ref([]);
+const narrators: Ref<Array<Author>> = ref([]);
+const filteredNarrators: Ref<Array<Wrapper>> = ref([]);
 
-let filteredPublishers: Ref<Array<string>> = ref([])
+const filteredPublishers: Ref<Array<string>> = ref([])
 
-let seriesCopy: Ref<Array<SeriesOrder>> = ref([])
+const seriesCopy: Ref<Array<SeriesOrder>> = ref([])
 
 const showModal: Ref<boolean> = ref(false)
 const metadata: Ref<Metadata | null> = ref(null)
 
 const showImagePickerModal: Ref<boolean> = ref(false)
 
-let hasImage = computed(() => {
+const hasImage = computed(() => {
   return StringUtils.isNotBlank(metadata.value?.image)
 })
-let deleteImage: Ref<boolean> = ref(false)
+const deleteImage: Ref<boolean> = ref(false)
 
 function toggleRemoveImage() {
   deleteImage.value = !deleteImage.value
@@ -127,7 +131,7 @@ function toggleRemoveImage() {
 const importBook = async () => {
   console.log("import book");
   if (StringUtils.isNotBlank(form.title)) {
-    let alreadyExisting = await dataService.checkIsbnExists(form.isbn10, form.isbn13)
+    const alreadyExisting = await dataService.checkIsbnExists(form.isbn10, form.isbn13)
     console.log('already existing')
     console.log(alreadyExisting)
     let saveBook = true
@@ -137,6 +141,7 @@ const importBook = async () => {
         html: `<p>${t('labels.book_with_same_isbn_already_exists')}:<br>${alreadyExisting.title}<br>${t('labels.save_new_anyway')}</p>`,
         showDenyButton: false,
         confirmButtonText: t('labels.save'),
+        cancelButtonText: t('labels.dont_save')
       }).then((result) => {
         if (result.isConfirmed) {
           saveBook = true
@@ -149,7 +154,7 @@ const importBook = async () => {
     if (!saveBook) {
       return
     }
-    let userBook: UserBook = fillBook(form, publishedDate.value)
+    const userBook: UserBook = fillBook(form, publishedDate.value)
     authors.value.forEach((a) => {
         userBook.book.authors?.push(a)
     });
@@ -184,11 +189,11 @@ const importBook = async () => {
       console.log(`push book ` + userBook);
       console.log(userBook);
       progress.value = true
-      let res: UserBook = await dataService.saveUserBookImage(
+      const res: UserBook = await dataService.saveUserBookImage(
         userBook,
         file.value,
         (event: { loaded: number; total: number }) => {
-          let percent = Math.round((100 * event.loaded) / event.total);
+          const percent = Math.round((100 * event.loaded) / event.total);
           console.log("percent " + percent);
           uploadPercentage.value = percent;
         }
@@ -208,7 +213,7 @@ const importBook = async () => {
 };
 
 const fillBook = (formdata: any, publishedDate: Date | null): UserBook => {
-  let userBook: UserBook = {
+  const userBook: UserBook = {
     book: {
       title: formdata.title,
       isbn10: formdata.isbn10,
@@ -231,14 +236,16 @@ const fillBook = (formdata: any, publishedDate: Date | null): UserBook => {
       authors: [],
       translators: [],
       narrators: [],
-      tags: []
+      tags: [],
+      originalTitle: formdata.originalTitle.length > 0 ? formdata.originalTitle : null
     },
     owned: formdata.owned,
     personalNotes: formdata.personalNotes,
     toRead: formdata.toRead,
     percentRead: formdata.percentRead,
     currentPageNumber: formdata.currentPageNumber,
-    borrowed: formdata.borrowed
+    borrowed: formdata.borrowed,
+    price: (formdata.price == null || formdata.price < 0) ? null : formdata.price
   }
   return userBook
 }
@@ -274,6 +281,8 @@ const clearForm = () => {
   form.inventaireId = ""
   form.percentRead = null
   form.currentPageNumber = null
+  form.originalTitle = ""
+  form.price= null
 };
 
 const clearDatePicker = () => {
@@ -290,7 +299,7 @@ const clearImageField = () => {
 };
 
 function getFilteredData(text: string, target: Array<Wrapper>) {
-  dataService.findAuthorByCriteria(text).then((data) => {
+  dataService.findAuthorByCriteria(Role.ANY, text).then((data) => {
     target.splice(0, target.length)
     data.content.forEach(a => target.push(ObjectUtils.wrapForOptions(a)))
   })
@@ -409,21 +418,21 @@ function modalClosed() {
 }
 
 const mergeMetadata = () => {
-  for (let key in metadata.value) {
+  for (const key in metadata.value) {
     console.log("key")
     console.log(key)
     if (key in form) {
-      let castKey = key as (keyof typeof metadata.value & keyof typeof form);
+      const castKey = key as (keyof typeof metadata.value & keyof typeof form);
       (form[castKey] as any) = metadata.value[castKey];
     }
   }
   if (metadata.value?.authors != null && metadata.value.authors.length > 0) {
-    let auths: Array<Author> = []
+    const auths: Array<Author> = []
     metadata.value.authors.forEach(a => auths.push(ObjectUtils.createNamedItem(a)))
     authors.value = auths
   }
   if (metadata.value?.tags != null && metadata.value.tags.length > 0) {
-    let importedTags: Array<Tag> = []
+    const importedTags: Array<Tag> = []
     metadata.value.tags.forEach(t => importedTags.push(ObjectUtils.createNamedItem(t)))
     tags.value = importedTags
   }
@@ -439,26 +448,21 @@ const mergeMetadata = () => {
 }
 
 const isbn10ValidationMessage = ref("")
-const isbn10LabelVariant = ref("")
 
 const isbn13ValidationMessage = ref("")
-const isbn13LabelVariant = ref("")
 
 const validateIsbn10 = (isbn: string) => {
   if (StringUtils.isNotBlank(isbn)) {
     const isbnVerify = new IsbnVerify(isbn);
     if (!isbnVerify.isIsbn10()) {
       isbn10ValidationMessage.value = t('labels.invalid_isbn10')
-      isbn10LabelVariant.value = "danger"
     }
     else {
       isbn10ValidationMessage.value = ""
-      isbn10LabelVariant.value = ""
     }
   }
   else {
     isbn10ValidationMessage.value = ""
-    isbn10LabelVariant.value = ""
   }
 }
 
@@ -467,20 +471,17 @@ const validateIsbn13 = (isbn: string) => {
     const isbnVerify = new IsbnVerify(isbn);
     if (!isbnVerify.isIsbn13()) {
       isbn13ValidationMessage.value = t('labels.invalid_isbn13')
-      isbn13LabelVariant.value = "danger"
     }
     else {
       isbn13ValidationMessage.value = ""
-      isbn13LabelVariant.value = ""
     }
   }
   else {
     isbn13ValidationMessage.value = ""
-    isbn13LabelVariant.value = ""
   }
 }
 
-let displayDatepicker = computed(() => {
+const displayDatepicker = computed(() => {
   return eventType.value !== null && eventType.value !== "NONE"
 })
 
@@ -533,598 +534,615 @@ let displayDatepicker = computed(() => {
         </div>
       </div>
       <div class="sm:w-8/12 justify-self-center">
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.title')"
-            class="capitalize"
+        <FormField
+          v-model="form.title"
+          :legend="t('book.title')"
+          placeholder=""
+        />
+        <FormField
+          v-model="form.originalTitle"
+          :legend="t('book.original_title')"
+          placeholder=""
+        />
+        <fieldset class="fieldset jelu-authorinput">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.author', 2) }}
+          </legend>
+          <o-taginput
+            v-model="authors"
+            :allow-autocomplete="true"
+            autocomplete="off"
+            :allow-new="true"
+            :allow-duplicates="false"
+            :open-on-focus="true"
+            :options="filteredAuthors"
+            :validate-item="(item: Author|string) => beforeAdd(item, authors)"
+            :create-item="ObjectUtils.createNamedItem"
+            icon-pack="mdi"
+            icon="account-plus"
+            :placeholder="t('labels.add_author')"
+            @input="(v: string) => getFilteredData(v, filteredAuthors)"
           >
-            <o-input 
-              v-model="form.title"
-              expanded
-              class="w-full input focus:input-accent"
-            />
-          </o-field>
-        </div>
-
-        <div class="field jelu-authorinput mb-3">
-          <o-field 
-            horizontal 
-            :label="t('book.author', 2)"
-            class="capitalize"
+            <template #default="{ value }">
+              <div class="jl-taginput-item">
+                {{ value.name }}
+              </div>
+            </template>
+            <template #selected="{ removeItem, items }">
+              <ClosableBadge
+                v-for="(item, index) in items"
+                :key="item.name"
+                :content="item.name"
+                class="badge-primary"
+                @closed="removeItem(index, $event)"
+              />
+            </template>
+          </o-taginput>
+        </fieldset>
+        <fieldset class="fieldset jelu-taginput">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.tag', 2) }}
+          </legend>
+          <o-taginput
+            v-model="tags"
+            :options="filteredTags"
+            :allow-autocomplete="true"
+            autocomplete="off"
+            :allow-new="true"
+            :allow-duplicates="false"
+            :open-on-focus="true"
+            :validate-item="beforeAddTag"
+            :create-item="ObjectUtils.createNamedItem"
+            icon-pack="mdi"
+            icon="tag-plus"
+            field="name"
+            :placeholder="t('labels.add_tag')"
+            @input="getFilteredTags"
           >
-            <o-taginput
-              v-model="authors"
-              :allow-autocomplete="true"
-              autocomplete="off"
-              :allow-new="true"
-              :allow-duplicates="false"
-              :open-on-focus="true"
-              :options="filteredAuthors"
-              :validate-item="(item: Author|string) => beforeAdd(item, authors)"
-              :create-item="ObjectUtils.createNamedItem"
-              icon-pack="mdi"
-              icon="account-plus"
-              :placeholder="t('labels.add_author')"
-              @input="(v: string) => getFilteredData(v, filteredAuthors)"
-            >
-              <template #default="{ value }">
-                <div class="jl-taginput-item">
-                  {{ value.name }}
-                </div>
-              </template>
-              <template #selected="{ removeItem, items }">
-                <ClosableBadge
-                  v-for="(item, index) in items"
-                  :key="item.name"
-                  :content="item.name"
-                  class="badge-primary"
-                  @closed="removeItem(index, $event)"
-                />
-              </template>
-            </o-taginput>
-          </o-field>
-        </div>
-        <div class="field jelu-taginput mb-3">
-          <o-field
-            horizontal
-            :label="t('book.tag', 2)"
-            class="capitalize"
+            <template #default="{ value }">
+              <div class="jl-taginput-item">
+                {{ value.name }}
+              </div>
+            </template>
+            <template #selected="{ removeItem, items }">
+              <ClosableBadge
+                v-for="(item, index) in items"
+                :key="item.name"
+                :content="item.name"
+                class="badge-secondary"
+                @closed="removeItem(index, $event)"
+              />
+            </template>
+          </o-taginput>
+        </fieldset>
+        <fieldset class="field jelu-authorinput pb-2">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.translator', 2) }}
+          </legend>
+          <o-taginput
+            v-model="translators"
+            :options="filteredTranslators"
+            :allow-autocomplete="true"
+            autocomplete="off"
+            :allow-new="true"
+            :allow-duplicates="false"
+            :open-on-focus="true"
+            :validate-item="(item: Author) => beforeAdd(item, translators)"
+            :create-item="ObjectUtils.createNamedItem"
+            icon-pack="mdi"
+            icon="account-plus"
+            field="name"
+            :placeholder="t('labels.add_translator')"
+            @input="(v: string) => getFilteredData(v, filteredTranslators)"
           >
-            <o-taginput
-              v-model="tags"
-              :options="filteredTags"
-              :allow-autocomplete="true"
-              autocomplete="off"
-              :allow-new="true"
-              :allow-duplicates="false"
-              :open-on-focus="true"
-              :validate-item="beforeAddTag"
-              :create-item="ObjectUtils.createNamedItem"
-              icon-pack="mdi"
-              icon="tag-plus"
-              field="name"
-              :placeholder="t('labels.add_tag')"
-              @input="getFilteredTags"
-            >
-              <template #default="{ value }">
-                <div class="jl-taginput-item">
-                  {{ value.name }}
-                </div>
-              </template>
-              <template #selected="{ removeItem, items }">
-                <ClosableBadge
-                  v-for="(item, index) in items"
-                  :key="item.name"
-                  :content="item.name"
-                  class="badge-secondary"
-                  @closed="removeItem(index, $event)"
-                />
-              </template>
-            </o-taginput>
-          </o-field>
-        </div>
-        <div class="field jelu-authorinput pb-2">
-          <o-field
-            horizontal
-            :label="t('book.translator', 2)"
-            class="capitalize"
+            <template #default="{ value }">
+              <div class="jl-taginput-item">
+                {{ value.name }}
+              </div>
+            </template>
+            <template #selected="{ removeItem, items }">
+              <ClosableBadge
+                v-for="(item, index) in items"
+                :key="item.name"
+                :content="item.name"
+                class="badge-primary"
+                @closed="removeItem(index, $event)"
+              />
+            </template>
+          </o-taginput>
+        </fieldset>
+        <fieldset class="field jelu-authorinput pb-2">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.narrator', 2) }}
+          </legend>
+          <o-taginput
+            v-model="narrators"
+            :options="filteredNarrators"
+            :allow-autocomplete="true"
+            autocomplete="off"
+            :allow-new="true"
+            :allow-duplicates="false"
+            :open-on-focus="true"
+            :validate-item="(item: Author) => beforeAdd(item, narrators)"
+            :create-item="ObjectUtils.createNamedItem"
+            icon-pack="mdi"
+            icon="account-plus"
+            field="name"
+            :placeholder="t('labels.add_narrator')"
+            @input="(v: string) => getFilteredData(v, filteredNarrators)"
           >
-            <o-taginput
-              v-model="translators"
-              :options="filteredTranslators"
-              :allow-autocomplete="true"
-              autocomplete="off"
-              :allow-new="true"
-              :allow-duplicates="false"
-              :open-on-focus="true"
-              :validate-item="(item: Author) => beforeAdd(item, translators)"
-              :create-item="ObjectUtils.createNamedItem"
-              icon-pack="mdi"
-              icon="account-plus"
-              field="name"
-              :placeholder="t('labels.add_translator')"
-              @input="(v: string) => getFilteredData(v, filteredTranslators)"
-            > 
-              <template #default="{ value }">
-                <div class="jl-taginput-item">
-                  {{ value.name }}
-                </div>
-              </template>
-              <template #selected="{ removeItem, items }">
-                <ClosableBadge
-                  v-for="(item, index) in items"
-                  :key="item.name"
-                  :content="item.name"
-                  class="badge-primary"
-                  @closed="removeItem(index, $event)"
-                />
-              </template>
-            </o-taginput>
-          </o-field>
-        </div>
-        <div class="field jelu-authorinput pb-2">
-          <o-field
-            horizontal
-            :label="t('book.narrator', 2)"
-            class="capitalize"
+            <template #default="{ value }">
+              <div class="jl-taginput-item">
+                {{ value.name }}
+              </div>
+            </template>
+            <template #selected="{ removeItem, items }">
+              <ClosableBadge
+                v-for="(item, index) in items"
+                :key="item.name"
+                :content="item.name"
+                class="badge-primary"
+                @closed="removeItem(index, $event)"
+              />
+            </template>
+          </o-taginput>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.summary') }}
+          </legend>
+          <textarea
+            v-model="form.summary"
+            maxlength="50000"
+            class="textarea focus:textarea-accent w-full"
+          />
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.isbn10') }}
+          </legend>
+          <input
+            v-model="form.isbn10"
+            type="text"
+            name="isbn10"
+            class="input w-full focus:input-accent validator"
+            :valid="isbn10ValidationMessage.length < 1"
+            @blur="validateIsbn10($event.target.value)"
           >
-            <o-taginput
-              v-model="narrators"
-              :options="filteredNarrators"
-              :allow-autocomplete="true"
-              autocomplete="off"
-              :allow-new="true"
-              :allow-duplicates="false"
-              :open-on-focus="true"
-              :validate-item="(item: Author) => beforeAdd(item, narrators)"
-              :create-item="ObjectUtils.createNamedItem"
-              icon-pack="mdi"
-              icon="account-plus"
-              field="name"
-              :placeholder="t('labels.add_narrator')"
-              @input="(v: string) => getFilteredData(v, filteredNarrators)"
-            > 
-              <template #default="{ value }">
-                <div class="jl-taginput-item">
-                  {{ value.name }}
-                </div>
-              </template>
-              <template #selected="{ removeItem, items }">
-                <ClosableBadge
-                  v-for="(item, index) in items"
-                  :key="item.name"
-                  :content="item.name"
-                  class="badge-primary"
-                  @closed="removeItem(index, $event)"
-                />
-              </template>
-            </o-taginput>
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.summary')"
-            class="capitalize"
+          <div class="text-error">
+            {{ isbn10ValidationMessage }}
+          </div>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.isbn13') }}
+          </legend>
+          <input
+            v-model="form.isbn13"
+            type="text"
+            name="isbn13"
+            class="input w-full focus:input-accent validator"
+            :valid="isbn13ValidationMessage.length < 1"
+            @blur="validateIsbn13($event.target.value)"
           >
-            <o-input
-              v-model="form.summary"
-              maxlength="50000"
-              expanded
-              type="textarea"
-              class="textarea focus:textarea-accent"
-            />
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.isbn10')"
-            :message="isbn10ValidationMessage"
-            :variant="isbn10LabelVariant"
-            class="uppercase"
+          <div class="text-error">
+            {{ isbn13ValidationMessage }}
+          </div>
+        </fieldset>
+        <fieldset class="fieldset sm:grid sm:grid-cols-3">
+          <legend class="fieldset-legend capitalize providers-ids">
+            {{ t('book.identifiers') }}
+          </legend>
+          <input
+            v-model="form.googleId"
+            name="googleId"
+            :placeholder="t('book.google_id')"
+            class="input focus:input-accent w-full"
           >
-            <o-input
-              v-model="form.isbn10"
-              name="isbn10"
-              expanded
-              :placeholder="t('book.isbn10')"
-              class="input focus:input-accent w-full"
-              @blur="validateIsbn10($event.target.value)"
-            />
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.isbn13')"
-            :message="isbn13ValidationMessage"
-            :variant="isbn13LabelVariant"
-            class="uppercase"
+          <input
+            v-model="form.goodreadsId"
+            type="text"
+            name="goodreadsId"
+            :placeholder="t('book.goodreads_id')"
+            class="input focus:input-accent w-full"
           >
-            <o-input
-              v-model="form.isbn13"
-              name="isbn13"
-              expanded
-              :placeholder="t('book.isbn13')"
-              class="input focus:input-accent w-full"
-              @blur="validateIsbn13($event.target.value)"
-            />
-          </o-field>
-        </div>
-        <div class="field">
-          <o-field
-            horizontal
-            :label="t('book.identifiers')"
-            class="capitalize providers-ids"
+          <input
+            v-model="form.amazonId"
+            type="text"
+            name="amazonId"
+            :placeholder="t('book.amazon_id')"
+            class="input focus:input-accent w-full"
           >
-            <o-input
-              v-model="form.googleId"
-              name="googleId"
-              :placeholder="t('book.google_id')"
-              class="input focus:input-accent w-full"
-            />
-            <o-input
-              v-model="form.goodreadsId"
-              name="goodreadsId"
-              :placeholder="t('book.goodreads_id')"
-              class="input focus:input-accent w-full"
-            />
-            <o-input
-              v-model="form.amazonId"
-              name="amazonId"
-              :placeholder="t('book.amazon_id')"
-              class="input focus:input-accent w-full"
-            />
-            <o-input
-              v-model="form.librarythingId"
-              name="librarythingId"
-              :placeholder="t('book.librarything_id')"
-              class="input focus:input-accent w-full"
-            />
-            <o-input
-              v-model="form.isfdbId"
-              name="isfdbId"
-              :placeholder="t('book.isfdb_id')"
-              class="input focus:input-accent w-full"
-            />
-            <o-input
-              v-model="form.openlibraryId"
-              name="openlibraryId"
-              :placeholder="t('book.openlibrary_id')"
-              class="input focus:input-accent w-full"
-            />
-            <o-input
-              v-model="form.noosfereId"
-              name="noosfereId"
-              :placeholder="t('book.noosfere_id')"
-              class="input focus:input-accent w-full"
-            />
-            <o-input
-              v-model="form.inventaireId"
-              name="inventaireId"
-              :placeholder="t('book.inventaire_id')"
-              class="input focus:input-accent w-full"
-            />
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.publisher')"
-            class="capitalize"
+          <input
+            v-model="form.librarythingId"
+            type="text"
+            name="librarythingId"
+            :placeholder="t('book.librarything_id')"
+            class="input focus:input-accent w-full"
           >
-            <o-autocomplete
-              v-model="form.publisher"
-              :root-class="'grow w-full'"
-              :input-classes="{rootClass:'w-full border-2 border-accent', inputClass:'w-full'}"
-              :clear-on-select="false"
-              backend-filtering
-              :debounce="100"
-              :options="filteredPublishers"
-              @input="getFilteredPublishers"
-              @select="selectPublisher"
-            >
-              <template #default="{ value }">
-                <div class="jl-taginput-item">
-                  {{ value }}
-                </div>
-              </template>
-            </o-autocomplete>
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.published_date')"
-            class="capitalize"
+          <input
+            v-model="form.isfdbId"
+            type="text"
+            name="isfdbId"
+            :placeholder="t('book.isfdb_id')"
+            class="input focus:input-accent w-full"
           >
-            <o-datepicker
-              ref="datepicker"
-              v-model="publishedDate"
-              :show-week-number="false"
-              :locale="undefined"
-              :placeholder="t('labels.click_to_select')"
-              icon="calendar"
-              icon-right="close"
-              :icon-right-clickable="true"
-              trap-focus
-              expanded
-              @icon-right-click="clearDatePicker"
-            />
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.page_count')"
-            class="capitalize"
+          <input
+            v-model="form.openlibraryId"
+            type="text"
+            name="openlibraryId"
+            :placeholder="t('book.openlibrary_id')"
+            class="input focus:input-accent w-full"
           >
-            <o-input
+          <input
+            v-model="form.noosfereId"
+            type="text"
+            name="noosfereId"
+            :placeholder="t('book.noosfere_id')"
+            class="input focus:input-accent w-full"
+          >
+          <input
+            v-model="form.inventaireId"
+            type="text"
+            name="inventaireId"
+            :placeholder="t('book.inventaire_id')"
+            class="input focus:input-accent w-full"
+          >
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.publisher') }}
+          </legend>
+          <o-autocomplete
+            v-model="form.publisher"
+            :root-class="'grow w-full'"
+            :input-classes="{rootClass:'w-full border-2 border-accent', inputClass:'w-full'}"
+            :clear-on-select="false"
+            backend-filtering
+            :debounce="100"
+            :options="filteredPublishers"
+            @input="getFilteredPublishers"
+            @select="selectPublisher"
+          >
+            <template #default="{ value }">
+              <div class="jl-taginput-item">
+                {{ value }}
+              </div>
+            </template>
+          </o-autocomplete>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.published_date') }}
+          </legend>
+          <o-datepicker
+            ref="datepicker"
+            v-model="publishedDate"
+            :show-week-number="false"
+            :locale="undefined"
+            :placeholder="t('labels.click_to_select')"
+            icon="calendar"
+            icon-right="close"
+            :icon-right-clickable="true"
+            trap-focus
+            expanded
+            @icon-right-click="clearDatePicker"
+          />
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.page_count') }}
+          </legend>
+          <label class="input w-full">
+            <input
               v-model="form.pageCount"
               type="number"
-              number
+              class="input focus:input-accent"
               min="0"
-              class="input focus:input-accent sm:w-11/12"
-              expanded
-              icon-right="delete"
-              icon-right-clickable
-              @icon-right-click="form.pageCount = null;form.currentPageNumber=null"
-            />
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.language')"
-            class="capitalize"
-          >
-            <o-input
-              v-model="form.language"
-              type="text"
-              expanded
-              class="input focus:input-accent w-full"
-            />
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            :label="t('book.series')"
-            horizontal
-            class="capitalize"
-          >
-            <div class="flex flex-col grow w-full">
+            >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-6 hover:cursor-pointer"
+              @click="form.pageCount = null; form.currentPageNumber = null"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+          </label>
+        </fieldset>
+        <FormField
+          v-model="form.language"
+          :legend="t('book.language')"
+          placeholder=""
+        />
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.series') }}
+          </legend>
+          <div class="flex flex-col grow w-full">
+            <SeriesCompleteInput v-model="seriesCopy" />
+          </div>
+        </fieldset>
+        <fieldset class="block fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.status') }}
+          </legend>
+          <div class="">
+            <label class="label cursor-pointer justify-center gap-2 flex flex-wrap">
               <div>
-                <SeriesCompleteInput v-model="seriesCopy" />
+                <input
+                  v-model="eventType"
+                  type="radio"
+                  name="radio-10"
+                  class="radio radio-primary mx-3"
+                  value="FINISHED"
+                >
+                <span class="label-text">{{ t('reading_events.finished') }}</span>
               </div>
-            </div>
-          </o-field>
-        </div>
-        <div class="block">
-          <o-field
-            horizontal
-            :label="t('book.status') + ' :'"
-            class="capitalize"
-          >
-            <o-radio
-              v-model="eventType"
-              name="type"
-              native-value="FINISHED"
-            >
-              {{ t('reading_events.finished') }}
-            </o-radio>
-            <o-radio
-              v-model="eventType"
-              name="type"
-              native-value="CURRENTLY_READING"
-            >
-              {{ t('reading_events.currently_reading') }}
-            </o-radio>
-            <o-radio
-              v-model="eventType"
-              name="type"
-              native-value="DROPPED"
-            >
-              {{ t('reading_events.dropped') }}
-            </o-radio>
-            <o-radio
-              v-model="eventType"
-              name="type"
-              native-value="NONE"
-            >
-              {{ t('reading_events.none') }}
-            </o-radio>
-          </o-field>
-        </div>
-        <div
+              <div>
+                <input
+                  v-model="eventType"
+                  type="radio"
+                  name="radio-10"
+                  class="radio radio-primary mx-3"
+                  value="CURRENTLY_READING"
+                >
+                <span class="label-text">{{ t('reading_events.currently_reading') }}</span>
+              </div>
+              <div>
+                <input
+                  v-model="eventType"
+                  type="radio"
+                  name="radio-10"
+                  class="radio radio-primary mx-3"
+                  value="DROPPED"
+                >
+                <span class="label-text">{{ t('reading_events.dropped') }}</span>
+              </div>
+              <div>
+                <input
+                  v-model="eventType"
+                  type="radio"
+                  name="radio-10"
+                  class="radio radio-primary mx-3"
+                  value="NONE"
+                >
+                <span class="label-text">{{ t('reading_events.none') }}</span>
+              </div>
+            </label>
+          </div>
+        </fieldset>
+        <fieldset
           v-if="displayDatepicker"
-          class="field"
+          class="fieldset"
         >
-          <o-field
-            horizontal
-            :label="t('labels.event_date')"
-            class="capitalize"
-          >
-            <o-datepicker
-              ref="datepicker"
-              v-model="eventDate"
-              :show-week-number="false"
-              :locale="undefined"
-              :placeholder="t('labels.click_to_select')"
-              :expanded="true"
-              icon="calendar"
-              icon-right="close"
-              icon-right-clickable="true"
-              mobile-native="false"
-              mobile-modal="false"
-              trap-focus
-              @icon-right-click="eventDate = null"
-            />
-          </o-field>
-        </div>
-        <div class="field my-3">
-          <o-field
-            horizontal
-            :label="t('book.personal_notes')"
-            class="capitalize"
-          >
-            <o-input
-              v-model="form.personalNotes"
-              maxlength="5000"
-              type="textarea"
-              expanded
-              class="textarea focus:textarea-accent"
-            />
-          </o-field>
-        </div>
-        <div class="field mb-2">
-          <o-field
-            horizontal
-            :label="t('book.owned')"
-            class="capitalize"
-          >
-            <o-checkbox v-model="form.owned">
+          <legend class="fieldset-legend capitalize">
+            {{ t('labels.event_date') }}
+          </legend>
+          <o-datepicker
+            ref="datepicker"
+            v-model="eventDate"
+            :show-week-number="false"
+            :locale="undefined"
+            :placeholder="t('labels.click_to_select')"
+            :expanded="true"
+            icon="calendar"
+            icon-right="close"
+            icon-right-clickable="true"
+            mobile-native="false"
+            mobile-modal="false"
+            trap-focus
+            @icon-right-click="eventDate = null"
+          />
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.personal_notes') }}
+          </legend>
+          <textarea
+            v-model="form.personalNotes"
+            maxlength="5000"
+            type="textarea"
+            class="textarea focus:textarea-accent w-full"
+          />
+        </fieldset>
+        <div class="grid grid-cols-3">
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend capitalize">
+              {{ t('book.owned') }}
+            </legend>
+            <label class="label">
+              <input
+                v-model="form.owned"
+                type="checkbox"
+                class="checkbox checkbox-primary"
+              >
               {{ ownedDisplay }}
-            </o-checkbox>
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.to_read') + ' ?'"
-            class="capitalize"
-          >
-            <o-checkbox v-model="form.toRead">
+            </label>
+          </fieldset>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend capitalize">
+              {{ t('book.to_read') }}&nbsp;?
+            </legend>
+            <label class="label">
+              <input
+                v-model="form.toRead"
+                type="checkbox"
+                class="checkbox checkbox-primary"
+              >
               {{ toReadDisplay }}
-            </o-checkbox>
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.borrowed') + ' ?'"
-            class="capitalize"
-          >
-            <o-checkbox v-model="form.borrowed">
+            </label>
+          </fieldset>
+          <fieldset class="fieldset">
+            <legend class="fieldset-legend capitalize">
+              {{ t('book.borrowed') }}&nbsp;?
+            </legend>
+            <label class="label">
+              <input
+                v-model="form.borrowed"
+                type="checkbox"
+                class="checkbox checkbox-primary"
+              >
               {{ borrowedDisplay }}
-            </o-checkbox>
-          </o-field>
+            </label>
+          </fieldset>
         </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.current_page_number')"
-            class="capitalize"
-          >
-            <o-input
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.price') }}
+          </legend>
+          <label class="input w-full">
+            <input
+              v-model="form.price"
+              type="number"
+              class="input focus:input-accent validator"
+              step="0.01"
+              min="0"
+            >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-6 hover:cursor-pointer"
+              @click="form.price = null"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+            <p class="validator-hint hidden">{{ t('errors.positive_only') }}</p>
+          </label>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.current_page_number') }}
+          </legend>
+          <label class="input w-full">
+            <input
               v-model="form.currentPageNumber"
               type="number"
-              number
+              class="input focus:input-accent"
               min="0"
-              expanded
-              class="input focus:input-accent w-11/12"
-              :max="form.pageCount"
               :disabled="form.pageCount == null"
-              icon-right="delete"
-              icon-right-clickable
-              @icon-right-click="form.currentPageNumber = null"
-            />
-          </o-field>
-        </div>
-        <div class="field mb-3">
-          <o-field
-            horizontal
-            :label="t('book.percent_read')"
-            class="capitalize"
+              :max="form.pageCount"
+            >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke-width="1.5"
+              stroke="currentColor"
+              class="size-6 hover:cursor-pointer"
+              @click="form.currentPageNumber = null"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+              />
+            </svg>
+          </label>
+        </fieldset>
+        <fieldset class="fieldset">
+          <legend class="fieldset-legend capitalize">
+            {{ t('book.percent_read') }}
+          </legend>
+          <input
+            v-model="form.percentRead"
+            type="range"
+            min="0"
+            max="100"
+            class="w-full range range-primary range-xs"
           >
-            <o-slider
-              v-model="form.percentRead"
-              :min="0"
-              :max="100"
-              :disabled="form.pageCount != null"
-            />
-          </o-field>
-        </div>
-        <div
+        </fieldset>
+        <fieldset
           v-if="hasImage"
-          class="mb-4"
+          class="fieldset"
         >
-          <o-field horizontal>
-            <template #label>
-              {{ t('labels.actual_cover') }} :
-              <o-tooltip
-                v-if="!deleteImage"
-                :label="t('labels.click_bin_to_remove')"
-                multiline
-                position="right"
-              >
-                <span class="icon">
-                  <i class="mdi mdi-information-outline" />
-                </span>
-              </o-tooltip>
-              <o-tooltip
-                v-if="deleteImage"
-                :label="t('labels.refresh_to_restore')"
-                position="right"
-                multiline
-              >
-                <span class="icon">
-                  <i class="mdi mdi-information-outline" />
-                </span>
-              </o-tooltip>
-            </template>
-            <div class="indicator">
-              <span
-                v-if="!deleteImage"
-                class="badge indicator-item indicator-bottom indicator-start"
-                @click="toggleRemoveImage"
-              >
-                <i class="mdi mdi-delete" />
+          <legend class="fieldset-legend capitalize">
+            {{ t('labels.actual_cover') }}
+            <o-tooltip
+              v-if="!deleteImage"
+              :label="t('labels.click_bin_to_remove')"
+              multiline
+              position="right"
+            >
+              <span class="icon">
+                <i class="mdi mdi-information-outline" />
               </span>
-              <span
-                v-if="deleteImage"
-                class="badge indicator-item indicator-bottom indicator-start"
-                @click="toggleRemoveImage"
-              >
-                <i class="mdi mdi-autorenew" />
+            </o-tooltip>
+            <o-tooltip
+              v-if="deleteImage"
+              :label="t('labels.refresh_to_restore')"
+              position="right"
+              multiline
+            >
+              <span class="icon">
+                <i class="mdi mdi-information-outline" />
               </span>
-              <figure class="small-cover">
-                <img
-                  :src="metadata?.image?.startsWith('http') ? metadata?.image : '/files/' + metadata?.image"
-                  :class="deleteImage ? 'altered' : ''"
-                  alt="cover image"
-                >
-              </figure>
-            </div>
-          </o-field>
-        </div>
+            </o-tooltip>
+          </legend>
+          <div class="indicator">
+            <span
+              v-if="!deleteImage"
+              class="badge indicator-item indicator-bottom indicator-start"
+              @click="toggleRemoveImage"
+            >
+              <i class="mdi mdi-delete" />
+            </span>
+            <span
+              v-if="deleteImage"
+              class="badge indicator-item indicator-bottom indicator-start"
+              @click="toggleRemoveImage"
+            >
+              <i class="mdi mdi-autorenew" />
+            </span>
+            <figure class="small-cover">
+              <img
+                :src="metadata?.image?.startsWith('http') ? metadata?.image : '/files/' + metadata?.image"
+                :class="deleteImage ? 'altered' : ''"
+                alt="cover image"
+              >
+            </figure>
+          </div>
+        </fieldset>
         <div
           v-if="!hasImage || deleteImage"
-          class="mb-4"
         >
-          <o-field
-            class=""
-            horizontal
-            :label="t('labels.upload_cover')"
+          <fieldset
+            class="fieldset"
           >
+            <legend class="fieldset-legend capitalize">
+              {{ t('labels.upload_cover') }}
+            </legend>
             <div class="">
               <label class="label cursor-pointer justify-center gap-2 flex flex-wrap">
                 <div>
                   <input
                     v-model="uploadType"
                     type="radio"
-                    name="radio-10"
+                    name="radio-11"
                     class="radio radio-primary mx-3"
                     value="web"
                   >
-                  <span class="label-text">{{ t('labels.upload_from_web') }}</span> 
+                  <span class="label-text">{{ t('labels.upload_from_web') }}</span>
                 </div>
                 <div>
                   <input
                     v-model="uploadType"
                     type="radio"
-                    name="radio-10"
+                    name="radio-11"
                     class="radio radio-primary mx-3"
                     value="computer"
                   >
@@ -1134,39 +1152,78 @@ let displayDatepicker = computed(() => {
                   <input
                     v-model="uploadType"
                     type="radio"
-                    name="radio-10"
+                    name="radio-11"
                     class="radio radio-primary mx-3"
                     value="server"
                   >
-                  <span class="label-text">{{ t('labels.upload_from_server') }}</span> 
+                  <span class="label-text">{{ t('labels.upload_from_server') }}</span>
                 </div>
               </label>
             </div>
-          </o-field>
-          <o-field
+          </fieldset>
+          <fieldset
             v-if="uploadType == 'web'"
-            horizontal
-            :label="t('labels.enter_image_address')"
+            class="fieldset"
           >
-            <o-input
-              v-model="imageUrl"
-              type="url"
-              pattern="https?://.*"
-              :clearable="true"
-              expanded
-              icon-right-clickable
-              title="Url must start with http or https"
-              :placeholder="t('labels.url_must_start')"
-              class="input focus:input-accent w-full"
-              @icon-right-click="clearImageField"
-            />
-          </o-field>
-          <o-field
+            <legend
+              class="fieldset-legend capitalize"
+            >
+              {{ t('labels.enter_image_address') }}
+            </legend>
+            <label class="input validator w-full">
+              <svg
+                class="h-[1em] opacity-50"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+              >
+                <g
+                  stroke-linejoin="round"
+                  stroke-linecap="round"
+                  stroke-width="2.5"
+                  fill="none"
+                  stroke="currentColor"
+                >
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </g>
+              </svg>
+              <input
+                v-model="imageUrl"
+                type="url"
+                required
+                class="w-full"
+                :placeholder="t('labels.url_must_start')"
+                pattern="https?://.*"
+              >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke-width="1.5"
+                stroke="currentColor"
+                class="size-6 hover:cursor-pointer"
+                @click="clearImageField"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+                />
+              </svg>
+            </label>
+            <p class="validator-hint">
+              {{ t('labels.url_must_start') }}
+            </p>
+          </fieldset>
+          <fieldset
             v-else-if="uploadType == 'computer'"
-            horizontal
-            :label="t('labels.choose_file')"
-            class="file"
+            class="fieldset"
           >
+            <legend
+              class="file fieldset-legend"
+            >
+              {{ t('labels.choose_file') }}
+            </legend>
             <input
               type="file"
               accept="image/*"
@@ -1180,13 +1237,16 @@ let displayDatepicker = computed(() => {
               class="progress progress-primary"
             />
             <br>
-          </o-field>
-          <o-field
+          </fieldset>
+          <fieldset
             v-else
-            horizontal
-            :label="t('labels.choose_file')"
-            class="file"
+            class="fieldset"
           >
+            <legend
+              class="file fieldset-legend"
+            >
+              {{ t('labels.choose_file') }}
+            </legend>
             <button
               class="btn btn-primary button"
               @click="toggleImagePickerModal()"
@@ -1197,9 +1257,8 @@ let displayDatepicker = computed(() => {
               <span>{{ t('labels.choose_file') }}</span>
             </button>
             <span>{{ imagePath }}</span>
-          </o-field>
+          </fieldset>
         </div>
-
         <div class="field">
           <button
             class="btn btn-success mb-3 uppercase"

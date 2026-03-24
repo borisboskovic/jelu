@@ -1,29 +1,36 @@
 import com.github.gradle.node.npm.task.NpmTask
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 
 plugins {
-    id("org.springframework.boot") version "3.3.3"
-    id("io.spring.dependency-management") version "1.1.6"
-    val kotlinVersion = "1.9.21"
+    id("org.springframework.boot") version "3.5.8"
+    id("io.spring.dependency-management") version "1.1.7"
+    val kotlinVersion = "2.2.0"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.spring") version kotlinVersion
     kotlin("plugin.jpa") version kotlinVersion
     kotlin("plugin.allopen") version kotlinVersion
     kotlin("kapt") version kotlinVersion
-    id("com.github.node-gradle.node") version "7.0.2"
-    id("org.jlleitschuh.gradle.ktlint") version "11.5.0"
+    id("com.github.node-gradle.node") version "7.1.0"
+    id("org.jlleitschuh.gradle.ktlint") version "13.0.0"
 }
 
 kotlin {
     jvmToolchain(17)
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        freeCompilerArgs =
+            listOf(
+                "-Xjsr305=strict",
+                "-Xemit-jvm-type-annotations",
+                "-opt-in=kotlin.time.ExperimentalTime",
+                "-Xannotation-default-target=param-property",
+            )
+    }
 }
 
 configure<org.jlleitschuh.gradle.ktlint.KtlintExtension> {
-    version.set("0.50.0")
     outputToConsole.set(true)
     coloredOutput.set(true)
-    disabledRules.set(setOf("no-wildcard-imports", "parameter-list-wrapping"))
 }
 
 allOpen {
@@ -56,7 +63,7 @@ dependencies {
     implementation("com.github.ben-manes.caffeine:caffeine")
 
     implementation("com.fasterxml.staxmate:staxmate:2.4.1")
-    implementation("com.fasterxml.woodstox:woodstox-core:7.0.0")
+    implementation("com.fasterxml.woodstox:woodstox-core:7.1.1")
 
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
@@ -66,32 +73,32 @@ dependencies {
 
     implementation("org.xerial:sqlite-jdbc")
     implementation("org.liquibase:liquibase-core")
-    val exposedVersion = "0.53.0"
+    val exposedVersion = "0.61.0"
     implementation("org.jetbrains.exposed:exposed-spring-boot-starter:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
 // 	implementation("org.nuvito.spring.data:sqlite-dialect:1.0-SNAPSHOT")
 
-    implementation("io.github.microutils:kotlin-logging-jvm:3.0.5")
+    implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
     implementation("com.github.slugify:slugify:3.0.7")
-    implementation("commons-io:commons-io:2.16.1")
-    implementation("org.apache.commons:commons-lang3:3.17.0")
-    implementation("commons-validator:commons-validator:1.7")
-    implementation("org.jsoup:jsoup:1.18.1")
-    implementation("net.coobird:thumbnailator:0.4.20")
+    implementation("commons-io:commons-io:2.21.0")
+    implementation("org.apache.commons:commons-lang3:3.20.0")
+    implementation("commons-validator:commons-validator:1.10.1")
+    implementation("org.jsoup:jsoup:1.21.2")
+    implementation("net.coobird:thumbnailator:0.4.21")
 
-    implementation("org.apache.commons:commons-csv:1.10.0")
+    implementation("org.apache.commons:commons-csv:1.14.1")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test") {
         exclude(module = "mockito-core")
     }
-    testImplementation("io.mockk:mockk:1.13.12")
+    testImplementation("io.mockk:mockk:1.14.7")
     testImplementation("com.ninja-squad:springmockk:4.0.2")
     testImplementation("io.projectreactor:reactor-test")
 
-    val springdocVersion = "2.5.0"
+    val springdocVersion = "2.8.14"
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:$springdocVersion")
 
-    val luceneVersion = "9.11.1"
+    val luceneVersion = "9.12.3"
     implementation("org.apache.lucene:lucene-core:$luceneVersion")
     implementation("org.apache.lucene:lucene-analysis-common:$luceneVersion")
     implementation("org.apache.lucene:lucene-queryparser:$luceneVersion")
@@ -103,15 +110,15 @@ tasks.withType<Test> {
     systemProperty("spring.profiles.active", "test")
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = listOf(
-            "-Xjsr305=strict",
-            "-opt-in=kotlin.time.ExperimentalTime",
-        )
-        jvmTarget = "17"
-    }
-}
+// tasks.withType<KotlinCompile> {
+//     kotlinOptions {
+//         freeCompilerArgs = listOf(
+//             "-Xjsr305=strict",
+//             "-opt-in=kotlin.time.ExperimentalTime",
+//         )
+//         jvmTarget = "17"
+//     }
+// }
 
 tasks.getByName<BootJar>("bootJar") {
     manifest {
@@ -140,17 +147,18 @@ tasks.register<JavaExec>("unpack") {
 
 node {
     nodeProjectDir.set(file("${project.projectDir}/src/jelu-ui"))
-    version.set("18.18.2")
+    version.set("20.19.6")
     npmInstallCommand.set("ci")
     download.set(true)
 }
 
-val buildTaskUsingNpm = tasks.register<NpmTask>("npmBuild") {
-    npmCommand.set(listOf("run", "install-build"))
-    args.set(listOf("--", "--out-dir", "${layout.buildDirectory.get()}/npm-output"))
-    inputs.dir("src")
-    outputs.dir("${layout.buildDirectory.get()}/npm-output")
-}
+val buildTaskUsingNpm =
+    tasks.register<NpmTask>("npmBuild") {
+        npmCommand.set(listOf("run", "install-build"))
+        args.set(listOf("--", "--out-dir", "${layout.buildDirectory.get()}/npm-output"))
+        inputs.dir("src")
+        outputs.dir("${layout.buildDirectory.get()}/npm-output")
+    }
 
 tasks.register<Sync>("copyWebDist") {
     dependsOn("npmBuild")

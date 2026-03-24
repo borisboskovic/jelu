@@ -15,6 +15,11 @@ const { t } = useI18n({
 
 useTitle('Jelu | Stats')
 
+let currency = localStorage.getItem("JL_CURRENCY")
+if (currency == null) {
+  currency = "$"
+}
+
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale, LineController, PointElement, LineElement)
 
 const getYears = () => {
@@ -58,7 +63,13 @@ const getAllStats = () => {
             yAxisID: 'y1',
             backgroundColor: '#f87979',
             data: res.map(r => r.dropped)
-          }
+          },
+          {
+            label: t('book.price'),
+            yAxisID: 'y1',
+            backgroundColor: '#a5dd2c',
+            data: res.map(r => r.price)
+          },
         ]
       } as any // mixed charts typing is broken
       chartData.value = { ...updatedChartData }
@@ -100,7 +111,13 @@ const getYearStats = () => {
               backgroundColor: '#f87979',
               yAxisID: 'y1',
               data: res.map(r => r.dropped)
-            }
+            },
+            {
+              label: t('book.price'),
+              yAxisID: 'y1',
+              backgroundColor: '#a5dd2c',
+              data: res.map(r => r.price)
+            },
           ]
         } as any // mixed charts typing is broken
         yearChartData.value = { ...updatedChartData }
@@ -141,7 +158,7 @@ const chartOptions = ref({
 
 const years: Ref<Array<number>> = ref([])
 const currentYear: Ref<number|null> = ref(null)
-const totals: Ref<TotalsStats> = ref({"read": 0, "unread": 0, "dropped": 0, "total" : 0})
+const totals: Ref<TotalsStats> = ref({"read": 0, "unread": 0, "dropped": 0, "total" : 0, "price": 0})
 
 watch(currentYear, (newVal, oldVal) => {
   console.log("year " + newVal + " " + oldVal)
@@ -163,7 +180,7 @@ totalStats()
       {{ t('stats.total') }}:&nbsp;{{ totals.total }}
     </h1>
     <div class="mb-2">
-      {{ t('stats.read') }}:&nbsp;{{ totals.read }} / {{ t('stats.unread') }}:&nbsp;{{ totals.unread }} / {{ t('stats.dropped') }}:&nbsp;{{ totals.dropped }}
+      {{ t('stats.read') }}:&nbsp;{{ totals.read }} / {{ t('stats.unread') }}:&nbsp;{{ totals.unread }} / {{ t('stats.dropped') }}:&nbsp;{{ totals.dropped }} / {{ t('stats.prices_sum') }}&nbsp;{{ totals.price }}&nbsp;{{ currency }}
     </div>
     <h1 class="text-2xl typewriter w-11/12 sm:w-8/12 pb-4 capitalize">
       {{ t('stats.all_time') }}

@@ -1,6 +1,6 @@
 package io.github.bayang.jelu.security.oauth2
 
-import mu.KotlinLogging
+import io.github.oshai.kotlinlogging.KotlinLogging
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpMethod
@@ -36,7 +36,11 @@ class GithubOAuth2UserService : DefaultOAuth2UserService() {
                             RequestEntity<Any>(
                                 HttpHeaders().apply { setBearerAuth(userRequest.accessToken.tokenValue) },
                                 HttpMethod.GET,
-                                UriComponentsBuilder.fromUriString("${userRequest.clientRegistration.providerDetails.userInfoEndpoint.uri}/emails").build().toUri(),
+                                UriComponentsBuilder
+                                    .fromUriString(
+                                        "${userRequest.clientRegistration.providerDetails.userInfoEndpoint.uri}/emails",
+                                    ).build()
+                                    .toUri(),
                             ),
                             parameterizedResponseType,
                         ).body

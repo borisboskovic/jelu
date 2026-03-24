@@ -93,6 +93,12 @@ const router = createRouter({
             beforeEnter: [isLogged],
         },
         {
+            path: '/authors',
+            component: () => import(/* webpackChunkName: "recommend" */ './components/AuthorsList.vue'),
+            name: 'authors',
+            beforeEnter: [isLogged],
+        },
+        {
             path: '/reviews/:reviewId',
             component: () => import(/* webpackChunkName: "recommend" */ './components/ReviewDetail.vue'),
             name: 'review-detail',
@@ -142,6 +148,7 @@ const router = createRouter({
                 { path: 'stats', component: () => import(/* webpackChunkName: "recommend" */ './components/UserStats.vue')},
                 { path: 'tags', component: () => import(/* webpackChunkName: "recommend" */ './components/TagsAdmin.vue')},
                 { path: 'data', component: () => import(/* webpackChunkName: "recommend" */ './components/DataAdmin.vue')},
+                { path: 'api-tokens', component: () => import(/* webpackChunkName: "recommend" */ './components/ApiTokens.vue')},
             ]
         },
     ],

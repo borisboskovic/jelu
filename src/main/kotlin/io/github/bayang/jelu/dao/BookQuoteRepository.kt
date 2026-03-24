@@ -17,10 +17,12 @@ import java.util.UUID
 
 @Repository
 class BookQuoteRepository {
-
     fun findById(quoteId: UUID): BookQuote = BookQuote[quoteId]
 
-    fun save(bookQuoteDto: CreateBookQuoteDto, user: UserDto): BookQuote {
+    fun save(
+        bookQuoteDto: CreateBookQuoteDto,
+        user: UserDto,
+    ): BookQuote {
         val instant: Instant = nowInstant()
         return BookQuote.new {
             this.creationDate = instant
@@ -50,7 +52,8 @@ class BookQuoteRepository {
             query.andWhere { BookQuoteTable.visibility eq visibility }
         }
         val total = query.count()
-        query.limit(pageable.pageSize, pageable.offset)
+        query.limit(pageable.pageSize)
+        query.offset(pageable.offset)
         val orders: Array<Pair<Expression<*>, SortOrder>> =
             parseSorts(pageable.sort, Pair(BookQuoteTable.creationDate, SortOrder.DESC_NULLS_LAST), BookQuoteTable)
         query.orderBy(*orders)
@@ -61,8 +64,11 @@ class BookQuoteRepository {
         )
     }
 
-    fun update(bookQuoteId: UUID, updateBookQuoteDto: UpdateBookQuoteDto): BookQuote {
-        return BookQuote[bookQuoteId].apply {
+    fun update(
+        bookQuoteId: UUID,
+        updateBookQuoteDto: UpdateBookQuoteDto,
+    ): BookQuote =
+        BookQuote[bookQuoteId].apply {
             this.modificationDate = nowInstant()
             if (updateBookQuoteDto.position != null) {
                 this.position = updateBookQuoteDto.position
@@ -74,7 +80,6 @@ class BookQuoteRepository {
                 this.visibility = updateBookQuoteDto.visibility
             }
         }
-    }
 
     fun delete(bookQuoteId: UUID) {
         BookQuote[bookQuoteId].delete()
